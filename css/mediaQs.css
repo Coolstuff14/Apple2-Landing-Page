@@ -1,0 +1,50 @@
+@media screen and (max-width: 320px) and (orientation: portrait){/*portrait*/
+  .webOS{
+    -webkit-transform: scale(.75,.75); /* Safari */
+   transform: scale(.75,.75); /* Standard syntax */
+  }
+}
+@media screen and (max-height: 320px) and (orientation: landscape){/*Horizontal*/
+  .webOS{
+    top: 0px !important;
+    -webkit-transform: scale(.75,.75); /* Safari */
+   transform: scale(.75,.75); /* Standard syntax */
+  }
+}
+
+@media screen and (min-height: 600px) and (max-height: 762px) and (orientation: portrait) {
+  .bg{
+    background: url(../img/bg768_vert.png) no-repeat center top fixed;
+    background-size: 432px auto !important;
+  }
+}
+
+@media screen and (min-width: 600px) and (max-width: 767px) and (orientation: landscape) {
+  .bg{
+    background: url(../img/bg768_horz.png) no-repeat center top fixed;
+    background-size: auto 432px !important;
+  }
+  .webOS{
+    top: 0px !important;
+    left:15px !important;
+  }
+}
+@media screen and (min-width: 768px) and (max-width: 1920px) {
+  .bg{
+    background: url(../img/bg1920.png) no-repeat center top fixed;
+    background-size: auto 1080px !important;
+  }
+}
+
+@media screen and (min-width: 1921px) {
+  .bg{
+    background: url(../img/bg2880.png) no-repeat center top fixed;
+    background-size: auto 1620px !important;
+  }
+  .webOS{
+    top: 200px !important;
+    right:250px !important;
+    -webkit-transform: scale(1.5,1.5); /* Safari */
+   transform: scale(1.5,1.5); /* Standard syntax */
+  }
+}

@@ -1,0 +1,94 @@
+html, body{
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  margin: 0;
+}
+
+.wrapper {
+position:relative;
+width:100%;
+height:100%;
+
+}
+
+
+.bg {
+    position:absolute;
+    width: 100%;
+    height: 100%;
+
+    /*background: url(../img/bg1920.png) no-repeat center top fixed;
+    background-size: auto 1080px !important;*/
+
+    overflow: hidden !important;
+    background-color: black !important;
+  /*  background-size: 100% !important;*/
+    z-index: 2 !important;
+}
+
+
+.webOS{
+  visibility: visible;
+  position: absolute;
+  margin:auto;
+
+  width: 560px;
+  height: 450px;
+
+  /*width: 32vw;
+  height: 40vh;*/
+  padding-left: 20px;
+  top: 110px;
+  left:0;
+  right:0;
+  overflow: auto;
+  border: 0px solid red;
+  z-index: 5;
+  transform-origin: top left;
+
+  font-family: Monaco, Consolas, "Lucida Console", monospace;
+  color: #1EFF00;
+}
+
+.webOS a{
+  color: #1EFF00;
+  text-decoration: none;
+}
+
+.banner{
+    visibility:hidden;
+}
+
+.spinner{
+    display: none;
+}
+
+.spinner img{
+  width: 30px;
+  height: auto
+}
+
+.contact-page a{
+  padding-left: 5px;
+}
+
+.back {
+  display: none;
+}
+
+.mm{
+    display: none;
+}
+
+.contact-text{
+  display: none;
+}
+
+.webOS .mm p{
+    margin-left: 40px;
+}
+
+.pointer{
+    visibility:hidden;
+}
