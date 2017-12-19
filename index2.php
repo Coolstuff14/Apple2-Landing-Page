@@ -1,19 +1,3 @@
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-
-  <title>Jake Lee</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Jacob Lee's Webiste">
-  <meta name="author" content="Jacob Lee">
-
-  <link rel="stylesheet" href="css/mainStyle.css">
-  <link rel="stylesheet" href="css/mediaQs.css">
-  <link rel="stylesheet" href="css/typer.css">
-</head>
-
-<body>
 <div class="wrapper">
 <div class="bg"></div>
 
@@ -52,12 +36,3 @@
     </div>
 </div>
 </div>
-
-
-</body>
-<!--Java & Scripts-->
-<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
-<script src="js/typer.min.js" type="text/javascript"></script>
-<script src="js/screenType.js" type="text/javascript"></script>
-
-</html>
