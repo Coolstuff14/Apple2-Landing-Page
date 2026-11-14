@@ -800,9 +800,24 @@ async function boot() {
   const baseExposure = num('exposure', 1.1);
   const clock = new THREE.Clock();
   let lastComposite = -1, frames = 0;
-  function frame() {
-    try { tick(); } catch (err) { console.error(err); loaderEl.classList.remove('done'); loaderEl.classList.add('error'); msgEl.textContent = `Renderer stopped: ${err.message || err}`; return; }
-    requestAnimationFrame(frame);
+  // Frame pacing. Full display rate while anything moves (input in the last 2 s, camera, tweens, flying disks,
+  // lights easing, CRT power animation); otherwise only the slow ambient motion is left (lava wax, dust, LEDs)
+  // and IDLE_FPS is plenty (10 fps while the browser window is not focused). ?fps=N overrides the idle rate (0 = never throttle).
+  const IDLE_FPS = num('fps', 30), IDLE_MS = IDLE_FPS > 0 ? 1000 / IDLE_FPS : 0, FLICKER_S = 0.25;
+  let busy = true, lastTick = -1e9, lastInput = performance.now(), rafId = 0;
+  for (const ev of ['pointermove', 'pointerdown', 'wheel', 'keydown', 'touchstart']) window.addEventListener(ev, () => { lastInput = performance.now(); }, { passive: true, capture: true });
+  const camPrev = new Float32Array(32); let cssDirty = true;
+  window.addEventListener('resize', () => { cssDirty = true; });
+  function cameraMoved() {
+    const a = camera.matrixWorld.elements, b = camera.projectionMatrix.elements; let moved = false;
+    for (let i = 0; i < 16; i++) { if (Math.abs(a[i] - camPrev[i]) > 1e-7 || Math.abs(b[i] - camPrev[16 + i]) > 1e-7) moved = true; camPrev[i] = a[i]; camPrev[16 + i] = b[i]; }
+    return moved;
+  }
+  function frame(now) {
+    rafId = requestAnimationFrame(frame);
+    if (!busy && IDLE_FPS > 0 && now - lastTick < (document.hasFocus() ? IDLE_MS : Math.max(IDLE_MS, 100)) - 1) return;   // 10 fps while another window has focus
+    lastTick = now;
+    try { tick(); } catch (err) { cancelAnimationFrame(rafId); console.error(err); loaderEl.classList.remove('done'); loaderEl.classList.add('error'); msgEl.textContent = `Renderer stopped: ${err.message || err}`; }
   }
   function tick() {
     const dt = Math.min(clock.getDelta(), 0.1), time = clock.elapsedTime;
@@ -812,7 +827,8 @@ async function boot() {
     step('lamp', state.lamp ? 1 : 0); step('lava', state.lava ? 1 : 0); step('sun', state.sun); step('crt', state.monitor && monPower ? 1 : 0);
     { const t = state.blinds ? 1 : 0; if (cur.blinds !== t) { cur.blinds = reduceMotion || Q.has('still') ? t : THREE.MathUtils.clamp(cur.blinds + (t > cur.blinds ? dt : -dt) / 0.9, 0, 1); lightsDirty = true; applyVariants(); } }
     if (!crtColor.equals(crtTarget)) { crtColor.lerp(crtTarget, k); if (Math.abs(crtColor.r - crtTarget.r) + Math.abs(crtColor.g - crtTarget.g) + Math.abs(crtColor.b - crtTarget.b) < 0.004) crtColor.copy(crtTarget); lightsDirty = true; }
-    const flickerDue = cur.lava > 0.01 && time - lastComposite > 0.1 && !Q.has('still');
+    const easing = lightsDirty;          // a light is still fading towards its target
+    const flickerDue = cur.lava > 0.01 && time - lastComposite > FLICKER_S && !Q.has('still');   // the lava lamp's slow 3 % shimmer
     if (lightsDirty || flickerDue) {
       computeTints(time);
       for (const key in comp) comp[key].render(tints);
@@ -879,17 +895,20 @@ async function boot() {
       controls.update(); clampCamera(); camera.lookAt(controls.target);
     }
     renderer.render(scene, camera);
-    css.render(cssScene, camera);
+    const camMoved = cameraMoved();
+    if (camMoved || cssDirty || frames < 3) { css.render(cssScene, camera); cssDirty = false; }   // the DOM desktop only needs re-placing when the view changes
+    busy = camMoved || easing || !!tween || media.flights.length > 0 || crtPow !== powT || cur.blinds !== (state.blinds ? 1 : 0)
+      || performance.now() - lastInput < 2000 || globeVel > 1e-3;
     if (++frames === 3) { loaderEl.classList.add('done'); document.body.dataset.ready = '1'; }
   }
   const project = (bp) => { const v = b2t(bp).project(camera); return [(v.x + 1) / 2 * window.innerWidth, (1 - v.y) / 2 * window.innerHeight]; };
   const probe = (x, y) => { const h = pickAt(x, y); return h ? { key: h.item.key, sub: h.sub, label: h.item.label, tip: tipFor(h), mode: h.item.mode || 'examine', hasText: !!h.item.text, hasAct: !!(RUN[h.item.key2 || h.item.key] || ACT[h.item.key]) } : null; };
-  window.__room = { state, setRoom, focusMonitor, exitFocus, camera, controls, meta, project, probe,
+  window.__room = { get frames() { return frames; }, state, setRoom, focusMonitor, exitFocus, camera, controls, meta, project, probe,
     items: [...itemByKey.values()].map((i) => ({ key: i.key, label: i.label, mode: i.mode || 'examine', text: i.text || '', run: !!RUN[i.key2 || i.key], act: !!ACT[i.key] })),
     get os() { return os; }, get examined() { return examined; }, get monPower() { return monPower; }, get calMonth() { return calMonth; },
     get keys() { return Array.from(shared.uKeys.value.slice(0, KB.keys.length)); }, get mouseOffset() { return shared.uMouseOff.value.toArray(); },
     examine: (key) => { const it = itemByKey.get(key); if (it) examine({ item: it, sub: 0, uv: null, point: null, mat: '' }); return !!it; },
     get spin() { return shared.uSpin.value; }, get crtPow() { return crtPow; }, get glassOn() { return screenMat.uniforms.uOn.value; }, get mode() { return mode; }, plant, media, has: HAS, albums, get stageShown() { return shared.uStage.value; }, get wiltShown() { return shared.uWilt.value; },
     get notebookInk() { const d = nbInk.getContext('2d').getImageData(0, 0, 512, 640).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 20) n++; return n; }, get sway() { return shared.uSway.value; }, get muted() { return muted; }, get displayText() { return dispText; } };
-  frame();
+  rafId = requestAnimationFrame(frame);
 }
