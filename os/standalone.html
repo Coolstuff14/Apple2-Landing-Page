@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Summit 98 — standalone test</title>
+<script>
+  // Error collector (classic script, installed before any module loads).
+  window.__errors = [];
+  (function () {
+    var push = function (kind, msg) {
+      window.__errors.push(kind + ': ' + msg);
+      var el = document.getElementById('errors');
+      if (el) { el.textContent = window.__errors.join('\n'); el.dataset.count = window.__errors.length; }
+    };
+    window.addEventListener('error', function (e) {
+      var t = e.target;
+      if (t && t !== window && (t.src || t.href)) push('resource', t.src || t.href);
+      else push('error', (e.message || 'unknown') + ' @ ' + (e.filename || '') + ':' + (e.lineno || ''));
+    }, true);
+    window.addEventListener('unhandledrejection', function (e) { push('unhandledrejection', (e.reason && (e.reason.stack || e.reason.message)) || e.reason); });
+    var orig = console.error;
+    console.error = function () { push('console.error', Array.prototype.join.call(arguments, ' ')); return orig.apply(console, arguments); };
+  })();
+</script>
+<link rel="stylesheet" href="os.css">
+<style>
+  html, body { margin: 0; height: 100%; background: #17130f; color: #b9a98e; font: 12px/1.4 Menlo, Monaco, monospace; }
+  #stage { min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 16px; box-sizing: border-box; }
+  #frame { flex: none; }
+  /* The mount box is exactly what the host provides: 640x480, relative, clipped. */
+  #mount { position: relative; overflow: hidden; width: 640px; height: 480px; background: #000; transform-origin: 0 0; }
+  #panel { width: 100%; max-width: 1280px; display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+  #panel > div { flex: 1; min-width: 260px; }
+  #panel h4 { margin: 0 0 4px; color: #e8d8b8; font-size: 12px; }
+  #log, #errors, #selftest { margin: 0; white-space: pre-wrap; max-height: 200px; overflow: auto; }
+  #errors { color: #ff7a6a; }
+  #errors:empty::before { content: '(no errors)'; color: #6fae6f; }
+  #selftest .pass { color: #6fae6f; } #selftest .fail { color: #ff7a6a; }
+  button.host { font: inherit; background: #2b241c; color: #e8d8b8; border: 1px solid #5a4a36; padding: 2px 6px; margin: 0 4px 4px 0; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="frame"><div id="mount"></div></div>
+  <div id="panel">
+    <div><h4>mock bridge</h4>
+      <div>
+        <button class="host" data-host="lamp">host: toggle lamp</button>
+        <button class="host" data-host="power">host: toggle power</button>
+        <button class="host" data-host="stereo">host: stereo play/stop</button>
+      </div>
+      <pre id="log"></pre></div>
+    <div><h4>errors</h4><pre id="errors"></pre></div>
+    <div id="selftest-wrap" hidden><h4>selftest</h4><pre id="selftest"></pre></div>
+  </div>
+</div>
+<script type="module">
+  import { createOS, getAudio } from './os.js';
+
+  const params = new URLSearchParams(location.search);
+  const mount = document.getElementById('mount');
+  const frame = document.getElementById('frame');
+  const logEl = document.getElementById('log');
+  const log = (...a) => {
+    const line = a.map(v => (typeof v === 'string' ? v : JSON.stringify(v))).join(' ');
+    console.log('[bridge]', line);
+    logEl.textContent = (line + '\n' + logEl.textContent).slice(0, 4000);
+  };
+
+  // ---- test transforms -------------------------------------------------------------
+  const scale = Math.max(0.25, Number(params.get('scale')) || 1);
+  if (params.get('skew')) {
+    mount.style.transformOrigin = '50% 50%';
+    mount.style.transform = 'perspective(900px) rotateY(18deg) rotateX(6deg) scale(1.3)';
+    frame.style.padding = '90px 110px';
+  } else if (scale !== 1) {
+    mount.style.transform = `scale(${scale})`;
+    frame.style.width = 640 * scale + 'px';
+    frame.style.height = 480 * scale + 'px';
+  }
+
+  // ---- mock bridge -----------------------------------------------------------------
+  const roomState = { lamp: true, lava: true, sun: 0.8, stereo: false };
+  const roomListeners = new Set();
+  const calls = [];
+  const bridge = {
+    getRoomState: () => ({ ...roomState }),
+    setRoom(key, value) {
+      calls.push(['setRoom', key, value]);
+      roomState[key] = value;
+      log('setRoom', key, value);
+      if (key === 'stereo') { if (value) getAudio().play(); else getAudio().stop(); }
+    },
+    onRoomChange(cb) { roomListeners.add(cb); log('onRoomChange registered'); },
+    exitFocus() { calls.push(['exitFocus']); log('exitFocus'); },
+  };
+  const hostSet = (key, value) => { roomState[key] = value; roomListeners.forEach(cb => cb({ ...roomState })); };
+
+  // ---- options from URL (os.js itself never reads location) -------------------------
+  const options = {};
+  if (params.get('skipBoot')) options.skipBoot = true;
+  if (params.has('open')) options.autoOpen = params.get('open').split(',').map(s => s.trim()).filter(Boolean);
+  if (params.get('saver')) options.screensaverMs = Number(params.get('saver'));
+  if (params.get('selftest')) { options.skipBoot = true; options.autoOpen = []; }
+
+  const os = createOS(mount, bridge, options);
+  os.on('power', on => log('event power', on));
+  os.on('sound', on => log('event sound', on));
+  os.on('screencolor', c => log('event screencolor', c.map(v => v.toFixed(2)).join(',')));
+  window.os = os;
+  window.getAudio = getAudio;
+
+  document.querySelectorAll('button.host').forEach(b => b.addEventListener('click', () => {
+    const k = b.dataset.host;
+    if (k === 'lamp') hostSet('lamp', !roomState.lamp);
+    if (k === 'power') os.setPower(!os.isOn());
+    if (k === 'stereo') { if (getAudio().isPlaying()) getAudio().stop(); else getAudio().play(); }
+  }));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') log('host saw Esc (would exit focus)'); });
+
+  // ?demo=start opens the Start menu (for screenshots); ?demo=notepad-menu opens a menu bar.
+  if (params.get('demo')) {
+    setTimeout(() => {
+      const root = mount.querySelector('.os98');
+      const down = el => el && el.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerId: 1, pointerType: 'mouse', button: 0, buttons: 1 }));
+      const enter = el => el && el.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }));
+      if (params.get('demo') === 'start') {
+        down(root.querySelector('.os-start'));
+        enter([...root.querySelectorAll('.os-startmenu .os-menu-item')].find(i => /Programs/.test(i.textContent)));
+      } else {
+        const labels = root.querySelectorAll('.os-win.active .os-mb-item');
+        down(labels[Number(params.get('demo')) || 0]);
+      }
+    }, 300);
+  }
+
+  if (params.get('selftest')) {
+    document.getElementById('selftest-wrap').hidden = false;
+    const { runSelfTest } = await import('./selftest.js');
+    runSelfTest({ os, mount, getAudio, calls, hostSet, out: document.getElementById('selftest') });
+  }
+</script>
+</body>
+</html>

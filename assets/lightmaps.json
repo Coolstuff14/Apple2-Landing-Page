@@ -1,0 +1,493 @@
+{
+ "atlases": {
+  "A": {
+   "layers": {
+    "sun": {
+     "file": "lm/A_sun.webp",
+     "range": 2.2309842109680176,
+     "size": 2048,
+     "light": "sun"
+    },
+    "sky": {
+     "file": "lm/A_sky.webp",
+     "range": 0.9714996218681335,
+     "size": 1024,
+     "light": "sky"
+    },
+    "lamp": {
+     "file": "lm/A_lamp.webp",
+     "range": 1.4005217552185059,
+     "size": 1024,
+     "light": "lamp"
+    },
+    "lava": {
+     "file": "lm/A_lava.webp",
+     "range": 6.872445106506348,
+     "size": 1024,
+     "light": "lava"
+    },
+    "crt": {
+     "file": "lm/A_crt.webp",
+     "range": 1.3207167387008667,
+     "size": 1024,
+     "light": "crt"
+    },
+    "sun_open": {
+     "file": "lm/A_sun_open.webp",
+     "range": 2.4079501628875732,
+     "size": 2048,
+     "light": "sun"
+    },
+    "sky_open": {
+     "file": "lm/A_sky_open.webp",
+     "range": 0.9714564681053162,
+     "size": 1024,
+     "light": "sky"
+    }
+   },
+   "coverage": 0.6061220169067383,
+   "chroma": {
+    "file": "lm/A_chroma.webp",
+    "tile": 512,
+    "cols": 4,
+    "rows": 2,
+    "order": [
+     "sun",
+     "sky",
+     "lamp",
+     "lava",
+     "crt",
+     "sun_open",
+     "sky_open"
+    ]
+   }
+  },
+  "B": {
+   "layers": {
+    "sun": {
+     "file": "lm/B_sun.webp",
+     "range": 2.247884750366211,
+     "size": 2048,
+     "light": "sun"
+    },
+    "sky": {
+     "file": "lm/B_sky.webp",
+     "range": 0.2396322637796402,
+     "size": 1024,
+     "light": "sky"
+    },
+    "lamp": {
+     "file": "lm/B_lamp.webp",
+     "range": 32.0,
+     "size": 1024,
+     "light": "lamp"
+    },
+    "lava": {
+     "file": "lm/B_lava.webp",
+     "range": 30.795713424682617,
+     "size": 1024,
+     "light": "lava"
+    },
+    "crt": {
+     "file": "lm/B_crt.webp",
+     "range": 2.172102212905884,
+     "size": 1024,
+     "light": "crt"
+    },
+    "sun_open": {
+     "file": "lm/B_sun_open.webp",
+     "range": 2.988389730453491,
+     "size": 2048,
+     "light": "sun"
+    },
+    "sky_open": {
+     "file": "lm/B_sky_open.webp",
+     "range": 0.42927274107933044,
+     "size": 1024,
+     "light": "sky"
+    }
+   },
+   "coverage": 0.4848926067352295,
+   "chroma": {
+    "file": "lm/B_chroma.webp",
+    "tile": 512,
+    "cols": 4,
+    "rows": 2,
+    "order": [
+     "sun",
+     "sky",
+     "lamp",
+     "lava",
+     "crt",
+     "sun_open",
+     "sky_open"
+    ]
+   }
+  },
+  "C": {
+   "layers": {
+    "sun": {
+     "file": "lm/C_sun.webp",
+     "range": 2.2499518394470215,
+     "size": 2048,
+     "light": "sun"
+    },
+    "sky": {
+     "file": "lm/C_sky.webp",
+     "range": 0.8458512425422668,
+     "size": 1024,
+     "light": "sky"
+    },
+    "lamp": {
+     "file": "lm/C_lamp.webp",
+     "range": 0.8314198851585388,
+     "size": 1024,
+     "light": "lamp"
+    },
+    "lava": {
+     "file": "lm/C_lava.webp",
+     "range": 0.016455497592687607,
+     "size": 1024,
+     "light": "lava"
+    },
+    "crt": {
+     "file": "lm/C_crt.webp",
+     "range": 0.16910003125667572,
+     "size": 1024,
+     "light": "crt"
+    }
+   },
+   "coverage": 0.15236330032348633,
+   "chroma": {
+    "file": "lm/C_chroma.webp",
+    "tile": 512,
+    "cols": 4,
+    "rows": 2,
+    "order": [
+     "sun",
+     "sky",
+     "lamp",
+     "lava",
+     "crt"
+    ]
+   }
+  },
+  "D": {
+   "layers": {
+    "sun_open": {
+     "file": "lm/D_sun_open.webp",
+     "range": 2.070970296859741,
+     "size": 1024,
+     "light": "sun"
+    },
+    "sky_open": {
+     "file": "lm/D_sky_open.webp",
+     "range": 0.9153764843940735,
+     "size": 512,
+     "light": "sky"
+    },
+    "lamp": {
+     "file": "lm/D_lamp.webp",
+     "range": 0.12449752539396286,
+     "size": 512,
+     "light": "lamp"
+    },
+    "lava": {
+     "file": "lm/D_lava.webp",
+     "range": 0.016200920566916466,
+     "size": 512,
+     "light": "lava"
+    },
+    "crt": {
+     "file": "lm/D_crt.webp",
+     "range": 0.09754069894552231,
+     "size": 512,
+     "light": "crt"
+    }
+   },
+   "coverage": 0.14862823486328125,
+   "chroma": {
+    "file": "lm/D_chroma.webp",
+    "tile": 256,
+    "cols": 4,
+    "rows": 2,
+    "order": [
+     "sun_open",
+     "sky_open",
+     "lamp",
+     "lava",
+     "crt"
+    ]
+   }
+  },
+  "E": {
+   "layers": {
+    "sun": {
+     "file": "lm/E_sun.webp",
+     "range": 0.9630668759346008,
+     "size": 1024,
+     "light": "sun"
+    },
+    "sky": {
+     "file": "lm/E_sky.webp",
+     "range": 0.22619327902793884,
+     "size": 512,
+     "light": "sky"
+    },
+    "lamp": {
+     "file": "lm/E_lamp.webp",
+     "range": 1.1489685773849487,
+     "size": 512,
+     "light": "lamp"
+    },
+    "lava": {
+     "file": "lm/E_lava.webp",
+     "range": 0.08078375458717346,
+     "size": 512,
+     "light": "lava"
+    },
+    "crt": {
+     "file": "lm/E_crt.webp",
+     "range": 0.20647642016410828,
+     "size": 512,
+     "light": "crt"
+    },
+    "sun_open": {
+     "file": "lm/E_sun_open.webp",
+     "range": 1.5557770729064941,
+     "size": 1024,
+     "light": "sun"
+    },
+    "sky_open": {
+     "file": "lm/E_sky_open.webp",
+     "range": 0.3295389413833618,
+     "size": 512,
+     "light": "sky"
+    }
+   },
+   "coverage": 0.6009159088134766,
+   "chroma": {
+    "file": "lm/E_chroma.webp",
+    "tile": 256,
+    "cols": 4,
+    "rows": 2,
+    "order": [
+     "sun",
+     "sky",
+     "lamp",
+     "lava",
+     "crt",
+     "sun_open",
+     "sky_open"
+    ]
+   }
+  },
+  "F": {
+   "layers": {
+    "sun": {
+     "file": "lm/F_sun.webp",
+     "range": 0.057563599199056625,
+     "size": 1024,
+     "light": "sun"
+    },
+    "sky": {
+     "file": "lm/F_sky.webp",
+     "range": 0.14189483225345612,
+     "size": 512,
+     "light": "sky"
+    },
+    "lamp": {
+     "file": "lm/F_lamp.webp",
+     "range": 1.147239089012146,
+     "size": 512,
+     "light": "lamp"
+    },
+    "lava": {
+     "file": "lm/F_lava.webp",
+     "range": 0.0816817581653595,
+     "size": 512,
+     "light": "lava"
+    },
+    "crt": {
+     "file": "lm/F_crt.webp",
+     "range": 0.20594869554042816,
+     "size": 512,
+     "light": "crt"
+    },
+    "sun_open": {
+     "file": "lm/F_sun_open.webp",
+     "range": 0.1823204755783081,
+     "size": 1024,
+     "light": "sun"
+    },
+    "sky_open": {
+     "file": "lm/F_sky_open.webp",
+     "range": 0.20601820945739746,
+     "size": 512,
+     "light": "sky"
+    }
+   },
+   "coverage": 0.6097879409790039,
+   "chroma": {
+    "file": "lm/F_chroma.webp",
+    "tile": 256,
+    "cols": 4,
+    "rows": 2,
+    "order": [
+     "sun",
+     "sky",
+     "lamp",
+     "lava",
+     "crt",
+     "sun_open",
+     "sky_open"
+    ]
+   }
+  },
+  "G": {
+   "layers": {
+    "sun": {
+     "file": "lm/G_sun.webp",
+     "range": 2.504974365234375,
+     "size": 1024,
+     "light": "sun"
+    },
+    "sky": {
+     "file": "lm/G_sky.webp",
+     "range": 0.47002553939819336,
+     "size": 512,
+     "light": "sky"
+    },
+    "lamp": {
+     "file": "lm/G_lamp.webp",
+     "range": 1.6319305896759033,
+     "size": 512,
+     "light": "lamp"
+    },
+    "lava": {
+     "file": "lm/G_lava.webp",
+     "range": 0.012020251713693142,
+     "size": 512,
+     "light": "lava"
+    },
+    "crt": {
+     "file": "lm/G_crt.webp",
+     "range": 0.2395956665277481,
+     "size": 512,
+     "light": "crt"
+    },
+    "sun_open": {
+     "file": "lm/G_sun_open.webp",
+     "range": 2.829770565032959,
+     "size": 1024,
+     "light": "sun"
+    },
+    "sky_open": {
+     "file": "lm/G_sky_open.webp",
+     "range": 0.486258864402771,
+     "size": 512,
+     "light": "sky"
+    }
+   },
+   "coverage": 0.2541790008544922,
+   "chroma": {
+    "file": "lm/G_chroma.webp",
+    "tile": 256,
+    "cols": 4,
+    "rows": 2,
+    "order": [
+     "sun",
+     "sky",
+     "lamp",
+     "lava",
+     "crt",
+     "sun_open",
+     "sky_open"
+    ]
+   }
+  }
+ },
+ "env": {
+  "sun": {
+   "files": [
+    "env/sun_0.webp",
+    "env/sun_1.webp",
+    "env/sun_2.webp"
+   ],
+   "range": 1.4324761629104614
+  },
+  "sky": {
+   "files": [
+    "env/sky_0.webp",
+    "env/sky_1.webp",
+    "env/sky_2.webp"
+   ],
+   "range": 3.9026222229003906
+  },
+  "lamp": {
+   "files": [
+    "env/lamp_0.webp",
+    "env/lamp_1.webp",
+    "env/lamp_2.webp"
+   ],
+   "range": 80.0
+  },
+  "lava": {
+   "files": [
+    "env/lava_0.webp",
+    "env/lava_1.webp",
+    "env/lava_2.webp"
+   ],
+   "range": 0.4667259156703949
+  },
+  "crt": {
+   "files": [
+    "env/crt_0.webp",
+    "env/crt_1.webp",
+    "env/crt_2.webp"
+   ],
+   "range": 1.703125
+  },
+  "sun_open": {
+   "files": [
+    "env/sun_open_0.webp",
+    "env/sun_open_1.webp",
+    "env/sun_open_2.webp"
+   ],
+   "range": 2.181640625
+  },
+  "sky_open": {
+   "files": [
+    "env/sky_open_0.webp",
+    "env/sky_open_1.webp",
+    "env/sky_open_2.webp"
+   ],
+   "range": 4.512275695800781
+  }
+ },
+ "layers": [
+  "sun",
+  "sky",
+  "lamp",
+  "lava",
+  "crt",
+  "sun_open",
+  "sky_open"
+ ],
+ "lights": {
+  "sun": "sun",
+  "sky": "sky",
+  "lamp": "lamp",
+  "lava": "lava",
+  "crt": "crt",
+  "sun_open": "sun",
+  "sky_open": "sky"
+ },
+ "env_levels": [
+  1024,
+  256,
+  64
+ ],
+ "encoding": "yc",
+ "env_encoding": "cbrt"
+}

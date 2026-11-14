@@ -1,0 +1,124 @@
+{
+ "albums": [
+  {
+   "kind": "note",
+   "sub": 0,
+   "caption": "Colombia 2022",
+   "images": [
+    "album/note0-00.jpg"
+   ],
+   "rect": [
+    28,
+    1436,
+    456,
+    456
+   ]
+  },
+  {
+   "kind": "photo",
+   "sub": 0,
+   "caption": "Iceland 2023",
+   "images": [
+    "album/photo0-00.jpg",
+    "album/photo0-01.jpg",
+    "album/photo0-02.jpg",
+    "album/photo0-03.jpg",
+    "album/photo0-04.jpg",
+    "album/photo0-05.jpg",
+    "album/photo0-06.jpg",
+    "album/photo0-07.jpg"
+   ],
+   "rect": [
+    29,
+    29,
+    646,
+    470
+   ]
+  },
+  {
+   "kind": "photo",
+   "sub": 1,
+   "caption": "Azores 2024",
+   "images": [
+    "album/photo1-00.jpg",
+    "album/photo1-01.jpg",
+    "album/photo1-02.jpg",
+    "album/photo1-03.jpg"
+   ],
+   "rect": [
+    733,
+    29,
+    646,
+    470
+   ]
+  },
+  {
+   "kind": "photo",
+   "sub": 2,
+   "caption": "Cross Country 2022",
+   "images": [
+    "album/photo2-00.jpg",
+    "album/photo2-01.jpg",
+    "album/photo2-02.jpg"
+   ],
+   "rect": [
+    29,
+    557,
+    646,
+    470
+   ]
+  },
+  {
+   "kind": "photo",
+   "sub": 3,
+   "caption": "Grand Canyon 2023",
+   "images": [
+    "album/photo3-00.jpg",
+    "album/photo3-01.jpg",
+    "album/photo3-02.jpg"
+   ],
+   "rect": [
+    733,
+    557,
+    646,
+    470
+   ]
+  },
+  {
+   "kind": "photo",
+   "sub": 4,
+   "caption": "Married",
+   "images": [
+    "album/photo4-00.jpg"
+   ],
+   "rect": [
+    1437,
+    29,
+    470,
+    646
+   ]
+  },
+  {
+   "kind": "photo",
+   "sub": 5,
+   "caption": "Peru 2025",
+   "images": [
+    "album/photo5-00.jpg",
+    "album/photo5-01.jpg",
+    "album/photo5-02.jpg",
+    "album/photo5-03.jpg",
+    "album/photo5-04.jpg",
+    "album/photo5-05.jpg"
+   ],
+   "rect": [
+    1437,
+    733,
+    470,
+    646
+   ]
+  }
+ ],
+ "pinboard": "pinboard.jpg?v=1794608229",
+ "atlas": 2048,
+ "mug": "mug.jpg?v=1794608229"
+}

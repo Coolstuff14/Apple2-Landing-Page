@@ -1,62 +1,42 @@
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-
-  <title>Jake Lee</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Jacob Lee's Webiste">
-  <meta name="author" content="Jacob Lee">
-
-  <link rel="stylesheet" href="./css/mainStyle.css">
-  <link rel="stylesheet" href="./css/mediaQs.css">
-  <link rel="stylesheet" href="./css/typer.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>1998 Called — Computer Corner</title>
+<meta name="description" content="An interactive, path-traced-and-baked 3D bedroom from October 1998 with a working retro desktop on the CRT.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23008080'/%3E%3Cpath d='M1 13 6 5l3 4 2-2 4 6z' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="./os/os.css">
+<link rel="stylesheet" href="./src/styles.css">
+<script type="importmap">
+{ "imports": { "three": "./vendor/three/three.module.js", "three/addons/": "./vendor/three/addons/" } }
+</script>
 </head>
-
 <body>
-<div class="wrapper">
-<div class="bg"></div>
-
-
-<div class="webOS">
-  <pre class="banner">
-      _       _          _
-     | | __ _| | _____  | |    ___  ___
-  _  | |/ _` | |/ / _ \ | |   / _ \/ _ \
- | |_| | (_| |   <  __/ | |__|  __/  __/
-  \___/ \____|_|\_\___| |_____\___|\___|
-  webOS v0.1.3                 (C) 2021</pre>
-
-    <span class="spinner"><img src="./img/cmd_spinner_fast.gif"></img></span><br>
-    <span class='cli'></span>
-    <div class="mm">
-      <!--https://codepen.io/anthdeldev/pen/BHuGL-->
-        <p>-------Main Menu-------</p>
-        <p></p>
-        <p class="hover">1:&nbsp;&nbsp;&nbsp;<a href="https://github.com/Coolstuff14" target="_blank">GitHub</a><span class="pointer"> ←</span></p>
-        <p class="hover">2:&nbsp;&nbsp;&nbsp;<a href="https://www.linkedin.com/in/jacob-lee-b348a795/" target="_blank">LinkedIn</a><span class="pointer"> ←</span></p>
-        <p class="hover">3:&nbsp;&nbsp;&nbsp;<a href="#">Featured Projects</a><span class="pointer"> ←</span></p>
-        <p class="hover contact">4:&nbsp;&nbsp;&nbsp;<a href="#">Contact</a><span class="pointer"> ←</span></p>
-    </div>
-
-    <span class="contact-page">
-      <span class="contact-typed"></span>
-      <span class="hover back"><a href="#">Back</a><span class="pointer"> ←</span></span>
-    </span>
-
-    <div class="contact-text">
-      <p>Jacob Lee</p>
-      <p></p>
-      <p>978-827-0132</p>
-      <p>Contact@JakeLee.info</p>
-    </div>
-</div>
+<div id="stage">
+  <div id="css3d"></div>
+  <canvas id="gl"></canvas>
+  <div id="grain" aria-hidden="true"></div>
 </div>
 
+<div id="tip" role="tooltip" hidden><b></b><span></span><i></i></div>
 
+<header id="title">
+  <h1>October&nbsp;1998</h1>
+  <p id="hint">Drag to look around · scroll to move closer · click things</p>
+</header>
+
+<button type="button" id="btn-reset">Reset view</button>
+<button type="button" id="btn-back" hidden>← Step away <kbd>Esc</kbd></button>
+<button type="button" id="btn-clear" hidden>Clear page</button>
+
+<div id="loader" role="status" aria-live="polite">
+  <div class="box">
+    <div class="name">1998 Called</div>
+    <div class="bar"><i id="bar"></i></div>
+    <div class="msg" id="msg">Dialing up…</div>
+  </div>
+</div>
+<script type="module" src="./src/main.js"></script>
 </body>
-<!--Java & Scripts-->
-<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
-<script src="./js/typer.min.js" type="text/javascript"></script>
-<script src="./js/screenType.js" type="text/javascript"></script>
-
 </html>
