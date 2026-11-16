@@ -17,7 +17,9 @@ const os = createOS(rootEl /* 640x480, relative, overflow hidden */, bridge, { s
   - `on(evt, cb)` -> unsubscribe; events `'power'(on)`, `'screencolor'([r,g,b])`, `'sound'(playing, {track, title})`
   - `mountDisk('A:' | 'D:', { label, files: [{ name, content | picture | track }] } | null)` fills or empties a removable drive
   - extras: `getState()` (`off|boot|on|halt`), `apps`, `destroy()`, `getScreensaver()` / `setScreensaver({ id, wait })`
-    (ids `snow stars ribbons logo blank none`; chosen in Start > Settings > Screen Saver, stored in localStorage)
+    (ids `flowerbox objects maze pipes text3d blank curves stars windows mystify marquee none`, default `pipes`; chosen in
+    Start > Settings > Screen Saver, stored in localStorage), `screensavers` (id + name), `previewScreensaver(id)`,
+    `screensaverInfo()`
 - `options`: `skipBoot`, `autoOpen: string[]` (omitted = Welcome window, `[]` = nothing);
   extras `screensaverMs` (default 90000), `power: false` (start switched off).
 - `bridge`: `getRoomState()`, `setRoom(key, value)`, `onRoomChange(cb)`, `exitFocus()` (all guarded).
@@ -28,6 +30,6 @@ const os = createOS(rootEl /* 640x480, relative, overflow hidden */, bridge, { s
 
 ## Files and testing
 `os.js` entry/power · `wm.js` · `shell.js` · `menus.js` · `ui.js` · `pointer.js` · `audio.js` · `fs.js` · `icons.js` ·
-`boot.js` · `screensaver.js` · `dom.js` · `apps/*.js` · `os.css` (every rule under `.os98`).
+`boot.js` · `screensaver.js` (registry + 2D savers) · `savers3d.js` · `saver-gl.js` (the one shared WebGL context) · `dom.js` · `apps/*.js` · `os.css` (every rule under `.os98`).
 `standalone.html` mounts the OS with a logging mock bridge. Params: `scale=2`, `skew=1`, `skipBoot=1`,
 `open=notepad,paint`, `saver=<ms>`, `demo=start`, `selftest=1` (`selftest.js`: synthetic-input PASS/FAIL list).

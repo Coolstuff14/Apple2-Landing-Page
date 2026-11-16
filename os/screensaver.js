@@ -1,123 +1,183 @@
-// Screensavers: original canvas designs drawn on a 640x480 logical screen.
-// Each saver is { id, name, init() -> state, draw(g, state, t, dt) }; the same draw functions feed the
-// full-screen overlay and the small preview in Display Properties.
+// Screensavers: the set that shipped with Windows 98, redrawn from scratch (no original code, bitmaps or textures).
+//   3D Flower Box · 3D Flying Objects · 3D Maze · 3D Pipes · 3D Text        -> savers3d.js (one shared WebGL context)
+//   Blank Screen · Curves and Colors · Flying Through Space · Flying Windows · Mystify Your Mind · Scrolling Marquee
+// Each saver is { id, name, init() -> state, draw(g, state, t, dt), dispose?(state) } on a 640x480 logical screen;
+// the same functions feed the full-screen overlay and the small preview in Display Properties.
 
 import { h } from './dom.js';
+import { SAVERS_3D } from './savers3d.js';
 
-const ridge = x => 426 - 46 * Math.abs(Math.sin(x * 0.011 + 0.6)) - 28 * Math.abs(Math.sin(x * 0.027 + 2)) - 10 * Math.sin(x * 0.09);
+export const DEFAULT_SAVER = 'pipes';
+const rnd = (a, b) => a + Math.random() * (b - a);
+const black = g => { g.fillStyle = '#000'; g.fillRect(0, 0, 640, 480); };
 
-const snow = {
-  id: 'snow', name: 'Snowfall',
-  init: () => Array.from({ length: 140 }, () => {
-    const depth = Math.random();
-    return {
-      x: Math.random() * 640, y: Math.random() * 480, s: depth > 0.8 ? 3 : depth > 0.4 ? 2 : 1,
-      v: 18 + depth * 46, a: 8 + depth * 16, w: 0.6 + Math.random() * 1.4, p: Math.random() * 6.28,
-      c: depth > 0.8 ? '#ffffff' : depth > 0.4 ? '#c8d8f0' : '#7088b0',
-    };
-  }),
-  draw(g, flakes, t, dt) {
-    g.fillStyle = '#000008'; g.fillRect(0, 0, 640, 480);
-    g.fillStyle = '#070f20';
-    for (let x = 0; x < 640; x += 4) { const y = Math.round(ridge(x) / 2) * 2; g.fillRect(x, y, 4, 480 - y); }
-    g.fillStyle = '#0c1830';
-    for (let x = 0; x < 640; x += 4) { const y = Math.round((ridge(x * 0.6 + 300) + 44) / 2) * 2; g.fillRect(x, y, 4, 480 - y); }
-    for (const f of flakes) {
-      f.y += f.v * dt; f.p += dt * f.w; f.x += Math.sin(f.p) * f.a * dt + 6 * dt;
-      if (f.y > 484) { f.y = -4; f.x = Math.random() * 640; }
-      if (f.x > 644) f.x -= 648;
-      g.fillStyle = f.c; g.fillRect(Math.round(f.x), Math.round(f.y), f.s, f.s);
+/** The mark that flies in "Flying Windows" and waves in "3D Flying Objects": a four-pane flag with a trail of
+ *  blocks, in the box (0, 0, w, h). `cols` = one colour, or [top-left, top-right, bottom-left, bottom-right].
+ *  This is the only place the mark is drawn: swap this function to fly something else. */
+export function drawFlag(g, w, hgt, cols) {
+  const c = typeof cols === 'string' ? [cols, cols, cols, cols] : cols;
+  const x0 = 0.36 * w, x1 = 0.98 * w, mid = (x0 + x1) / 2, gap = 0.035 * w, top = 0.16 * hgt, bot = 0.86 * hgt, my = (top + bot) / 2;
+  const wave = x => Math.sin((x - x0) / (x1 - x0) * Math.PI * 1.25 + 0.5) * 0.07 * hgt - (x - x0) / (x1 - x0) * 0.06 * hgt;
+  const pane = (xa, xb, ya, yb, col) => {
+    g.fillStyle = col; g.beginPath();
+    for (let i = 0; i <= 8; i++) { const x = xa + (xb - xa) * i / 8; g.lineTo(x, ya + wave(x)); }
+    for (let i = 8; i >= 0; i--) { const x = xa + (xb - xa) * i / 8; g.lineTo(x, yb + wave(x)); }
+    g.closePath(); g.fill();
+  };
+  pane(x0, mid - gap / 2, top, my - gap / 2, c[0]); pane(mid + gap / 2, x1, top, my - gap / 2, c[1]);
+  pane(x0, mid - gap / 2, my + gap / 2, bot, c[2]); pane(mid + gap / 2, x1, my + gap / 2, bot, c[3]);
+  for (let col = 0; col < 4; col++) {                 // the trail: blocks shrinking away to the left
+    const s = (0.085 - col * 0.017) * w, x = x0 - (col + 1) * 0.085 * w;
+    for (let row = 0; row < 4; row++) {
+      if (col > 1 && (row + col) % 2) continue;
+      g.fillStyle = c[row < 2 ? 0 : 2]; g.fillRect(x, top + (bot - top) * (row + 0.5) / 4 - s * 0.45 + wave(x0), s, s * 0.9);
     }
-  },
-};
+  }
+}
 
+// ---------------------------------------------------------------- Flying Through Space
 const stars = {
-  id: 'stars', name: 'Starfield',
-  init: () => Array.from({ length: 170 }, () => ({ x: (Math.random() - 0.5) * 2, y: (Math.random() - 0.5) * 2, z: Math.random() })),
+  id: 'stars', name: 'Flying Through Space',
+  init: () => Array.from({ length: 64 }, () => ({ x: rnd(-1, 1), y: rnd(-1, 1), z: Math.random() })),
   draw(g, list, t, dt) {
-    g.fillStyle = '#000'; g.fillRect(0, 0, 640, 480);
-    for (const s of list) {
-      s.z -= dt * 0.32;
-      if (s.z <= 0.02) { s.x = (Math.random() - 0.5) * 2; s.y = (Math.random() - 0.5) * 2; s.z = 1; }
-      const px = 320 + s.x / s.z * 300, py = 240 + s.y / s.z * 300;
-      if (px < 0 || px >= 640 || py < 0 || py >= 480) { s.z = 0; continue; }
-      const b = Math.round(255 * Math.min(1, 1.25 - s.z)), sz = s.z < 0.25 ? 3 : s.z < 0.55 ? 2 : 1;
-      g.fillStyle = `rgb(${b},${b},${Math.min(255, b + 30)})`; g.fillRect(Math.round(px), Math.round(py), sz, sz);
-    }
-  },
-};
-
-const ribbons = {
-  id: 'ribbons', name: 'Ribbons',
-  init: () => ({ trail: [], hue: Math.random() * 360 }),
-  draw(g, st, t) {
-    g.fillStyle = 'rgba(0,0,6,0.10)'; g.fillRect(0, 0, 640, 480);
-    const pt = k => [320 + 250 * Math.sin(t * 0.61 + k) * Math.cos(t * 0.23), 240 + 180 * Math.sin(t * 0.83 + k * 1.3 + 1.1)];
-    st.hue = (st.hue + 0.4) % 360;
-    for (let r = 0; r < 3; r++) {
-      const a = pt(r * 0.9), b = pt(r * 0.9 + 1.7 + 0.5 * Math.sin(t * 0.2));
-      g.strokeStyle = `hsl(${(st.hue + r * 70) % 360},90%,60%)`; g.lineWidth = 2;
-      g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.stroke();
-    }
-  },
-};
-
-const logo = {
-  id: 'logo', name: 'Wandering summit',
-  init: () => ({ x: 120, y: 90, vx: 74, vy: 52, c: 0 }),
-  draw(g, s, t, dt) {
-    const W = 132, H = 78, cols = ['#30c0c0', '#f0c040', '#e06060', '#70d070', '#c090f0'];
-    s.x += s.vx * dt; s.y += s.vy * dt;
-    if (s.x < 0 || s.x > 640 - W) { s.vx = -s.vx; s.x = Math.max(0, Math.min(640 - W, s.x)); s.c = (s.c + 1) % cols.length; }
-    if (s.y < 0 || s.y > 480 - H) { s.vy = -s.vy; s.y = Math.max(0, Math.min(480 - H, s.y)); s.c = (s.c + 1) % cols.length; }
-    g.fillStyle = '#000'; g.fillRect(0, 0, 640, 480);
-    const x = Math.round(s.x), y = Math.round(s.y);
-    g.fillStyle = cols[s.c];
-    g.beginPath(); g.moveTo(x + 6, y + 50); g.lineTo(x + 44, y + 6); g.lineTo(x + 66, y + 30); g.lineTo(x + 84, y + 16); g.lineTo(x + 126, y + 50); g.closePath(); g.fill();
+    black(g);
     g.fillStyle = '#fff';
-    g.beginPath(); g.moveTo(x + 44, y + 6); g.lineTo(x + 34, y + 18); g.lineTo(x + 43, y + 22); g.lineTo(x + 50, y + 16); g.lineTo(x + 56, y + 20); g.closePath(); g.fill();
-    g.font = 'bold 17px Tahoma, Geneva, Verdana, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'top';
-    g.fillStyle = cols[s.c]; g.fillText('Summit 98', x + W / 2, y + 56);
+    for (const s of list) {
+      s.z -= dt * 0.30;
+      const px = 320 + s.x / s.z * 300, py = 240 + s.y / s.z * 300;
+      if (s.z <= 0.02 || px < 0 || px >= 640 || py < 0 || py >= 480) { s.x = rnd(-1, 1); s.y = rnd(-1, 1); s.z = 1; continue; }
+      const sz = s.z < 0.2 ? 3 : s.z < 0.5 ? 2 : 1;
+      g.fillRect(Math.round(px), Math.round(py), sz, sz);
+    }
   },
 };
 
-const blank = { id: 'blank', name: 'Blank screen', init: () => null, draw(g) { g.fillStyle = '#000'; g.fillRect(0, 0, 640, 480); } };
+// ---------------------------------------------------------------- Flying Windows
+const FLY_COLS = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#00ffff', '#ff00ff', '#ffffff', '#ff8000', '#c0c0c0'];
+const windows = {
+  id: 'windows', name: 'Flying Windows',
+  init: () => Array.from({ length: 28 }, () => ({ x: rnd(-1, 1), y: rnd(-1, 1), z: Math.random(), c: FLY_COLS[Math.floor(Math.random() * FLY_COLS.length)] })),
+  draw(g, list, t, dt) {
+    black(g);
+    list.sort((a, b) => b.z - a.z);
+    for (const s of list) {
+      s.z -= dt * 0.26;
+      const size = Math.min(96, 7 / s.z), px = 320 + s.x / s.z * 260, py = 240 + s.y / s.z * 260;
+      if (s.z <= 0.03 || px < -90 || px > 730 || py < -70 || py > 550) { s.x = rnd(-1, 1); s.y = rnd(-1, 1); s.z = 1; s.c = FLY_COLS[Math.floor(Math.random() * FLY_COLS.length)]; continue; }
+      g.save(); g.translate(Math.round(px - size * 0.65), Math.round(py - size / 2)); drawFlag(g, size * 1.3, size, s.c); g.restore();
+    }
+  },
+};
 
-export const SAVERS = [snow, stars, ribbons, logo, blank];
+// ---------------------------------------------------------------- Mystify Your Mind
+const hsl = hue => `hsl(${Math.round(hue) % 360},100%,55%)`;
+const bouncer = () => ({ x: rnd(20, 620), y: rnd(20, 460), vx: rnd(110, 210) * (Math.random() < 0.5 ? -1 : 1), vy: rnd(110, 210) * (Math.random() < 0.5 ? -1 : 1) });
+const bounce = (p, dt) => {
+  p.x += p.vx * dt; p.y += p.vy * dt;
+  if (p.x < 0 || p.x > 639) { p.vx = -p.vx; p.x = Math.max(0, Math.min(639, p.x)); }
+  if (p.y < 0 || p.y > 479) { p.vy = -p.vy; p.y = Math.max(0, Math.min(479, p.y)); }
+};
+const mystify = {
+  id: 'mystify', name: 'Mystify Your Mind',
+  init: () => ({ acc: 0, polys: [0, 1].map(i => ({ pts: [0, 1, 2, 3].map(bouncer), trail: [], hue: i ? 300 : 180, dh: i ? 14 : -11 })) }),
+  draw(g, st, t, dt) {
+    black(g);
+    st.acc += dt;
+    const snap = st.acc > 0.045; if (snap) st.acc = 0;
+    g.lineWidth = 1;
+    for (const p of st.polys) {
+      p.pts.forEach(q => bounce(q, dt)); p.hue = (p.hue + p.dh * dt + 360) % 360;
+      if (snap) { p.trail.push(p.pts.map(q => [q.x, q.y])); if (p.trail.length > 6) p.trail.shift(); }
+      g.strokeStyle = hsl(p.hue);
+      for (const shape of [...p.trail, p.pts.map(q => [q.x, q.y])]) {
+        g.beginPath(); shape.forEach((q, i) => (i ? g.lineTo(Math.round(q[0]) + 0.5, Math.round(q[1]) + 0.5) : g.moveTo(Math.round(q[0]) + 0.5, Math.round(q[1]) + 0.5))); g.closePath(); g.stroke();
+      }
+    }
+  },
+};
+
+// ---------------------------------------------------------------- Curves and Colors
+const curves = {
+  id: 'curves', name: 'Curves and Colors',
+  init: () => ({ acc: 0, hue: Math.random() * 360, pts: Array.from({ length: 12 }, bouncer), trail: [] }),
+  draw(g, st, t, dt) {
+    black(g);
+    st.pts.forEach(q => bounce(q, dt * 0.8)); st.hue = (st.hue + 40 * dt) % 360; st.acc += dt;
+    if (st.acc > 0.06) { st.acc = 0; st.trail.push({ hue: st.hue, p: st.pts.map(q => [q.x, q.y]) }); if (st.trail.length > 9) st.trail.shift(); }
+    g.lineWidth = 1;
+    for (const f of [...st.trail, { hue: st.hue, p: st.pts.map(q => [q.x, q.y]) }]) {
+      const p = f.p, n = p.length;
+      g.strokeStyle = hsl(f.hue); g.beginPath(); g.moveTo(p[0][0], p[0][1]);
+      for (let i = 0; i < n; i += 3) g.bezierCurveTo(p[i + 1][0], p[i + 1][1], p[i + 2][0], p[i + 2][1], p[(i + 3) % n][0], p[(i + 3) % n][1]);       // a closed chain of four cubic segments
+      g.stroke();
+    }
+  },
+};
+
+// ---------------------------------------------------------------- Scrolling Marquee
+const marquee = {
+  id: 'marquee', name: 'Scrolling Marquee',
+  init: () => ({ x: 660, y: 240, text: 'Summit 98' }),
+  draw(g, st, t, dt) {
+    black(g);
+    g.font = 'italic bold 56px "Times New Roman", Times, serif'; g.textBaseline = 'middle'; g.textAlign = 'left';
+    const w = g.measureText(st.text).width;
+    st.x -= 150 * dt;
+    if (st.x < -w - 20) { st.x = 660; st.y = rnd(60, 420); }       // position: random, a new height on every pass
+    g.fillStyle = '#ff00ff'; g.fillText(st.text, Math.round(st.x), Math.round(st.y));
+  },
+};
+
+const blank = { id: 'blank', name: 'Blank Screen', still: true, init: () => null, draw: black };
+
+// In the order of the original list box.
+export const SAVERS = [...SAVERS_3D({ fallback: mystify, drawFlag }), blank, curves, stars, windows, mystify, marquee];
 export const saverById = id => SAVERS.find(s => s.id === id) || null;
 
-/** Runs one saver on a canvas of any size (scaled from 640x480). Returns stop(). */
+/** Runs one saver on a canvas of any size (scaled from 640x480). Returns stop(), which also carries `.state`. */
 export function runSaver(canvas, id) {
   const def = saverById(id); if (!def) return () => {};
   const g = canvas.getContext('2d'); const st = def.init();
-  let raf = 0, last = 0, t = 0;
+  let raf = 0, last = 0, t = 0, failed = false, looked = -1e9, visible = true;
   g.fillStyle = '#000'; g.fillRect(0, 0, canvas.width, canvas.height);
+  // A screensaver can stay up for the rest of a visit (in the room nothing reaches the desktop until you sit down),
+  // so it is paced: about 30 frames a second, and nothing at all while its canvas is not shown.
   const frame = now => {
     raf = requestAnimationFrame(frame);
-    const dt = last ? Math.min(0.05, (now - last) / 1000) : 0.016; last = now; t += dt;
-    g.save(); g.scale(canvas.width / 640, canvas.height / 480); def.draw(g, st, t, dt); g.restore();
+    if (last && now - last < 28) return;
+    if (now - looked > 400) { looked = now; visible = !canvas.checkVisibility || canvas.checkVisibility({ visibilityProperty: true }); }
+    if (!visible) { last = now; return; }
+    const dt = last ? Math.min(0.05, (now - last) / 1000) : 0.033; last = now; t += dt;
+    g.save(); g.scale(canvas.width / 640, canvas.height / 480);
+    try { if (!failed) def.draw(g, st, t, dt); else black(g); } catch (err) { failed = true; console.warn(`[os98] screensaver ${id} stopped`, err); }      // an idle screen must never break the desktop
+    g.restore();
+    if (def.still) cancelAnimationFrame(raf);          // nothing moves: one frame is enough
   };
   raf = requestAnimationFrame(frame);
-  return () => cancelAnimationFrame(raf);
+  const stop = () => { cancelAnimationFrame(raf); try { def.dispose?.(st); } catch { /* context already gone */ } };
+  stop.state = st;
+  return stop;
 }
 
 export function createScreensaver(overlay) {
-  let canvas = null, stop = null, shownAt = 0;
+  let canvas = null, stop = null, shownAt = 0, current = null;
   return {
     active: () => !!canvas,
     /** ms since the saver appeared (used to ignore the pointer jitter that follows). */
     age: () => (canvas ? performance.now() - shownAt : 0),
-    show(id = 'snow') {
+    /** id and live state of the running saver (test hook) */
+    info: () => (canvas ? { id: current, state: stop?.state ?? null, canvas } : null),
+    show(id = DEFAULT_SAVER) {
       if (canvas || !saverById(id)) return;
       canvas = h('canvas.os-saver', { width: 640, height: 480 });
       overlay.replaceChildren(canvas);
       overlay.style.display = 'block';
-      shownAt = performance.now();
+      shownAt = performance.now(); current = id;
       stop = runSaver(canvas, id);
     },
     hide() {
       if (!canvas) return;
-      stop?.(); stop = null; canvas = null;
+      stop?.(); stop = null; canvas = null; current = null;
       overlay.replaceChildren();
       overlay.style.display = 'none';
     },

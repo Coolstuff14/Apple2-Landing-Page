@@ -12,7 +12,7 @@ import { createMenus } from './menus.js';
 import { createWM, SCREEN_W, SCREEN_H, WORK_H } from './wm.js';
 import { createShell } from './shell.js';
 import { createFS } from './fs.js';
-import { createScreensaver, SAVERS, saverById } from './screensaver.js';
+import { createScreensaver, SAVERS, saverById, DEFAULT_SAVER } from './screensaver.js';
 import { runBoot, runHalt, showOff } from './boot.js';
 import { msgBox } from './ui.js';
 import * as audio from './audio.js';
@@ -75,8 +75,8 @@ export function createOS(rootEl, bridge, options = {}) {
   let pending = [];
   let lastColor = [0, 0, 0];
   // Screensaver choice and wait time are the user's (Display Properties) and persist; options.screensaverMs overrides the wait for tests.
-  const saverCfg = Object.assign({ id: 'snow', wait: 90 }, store.get('summit98.saver', null) || {});
-  if (saverCfg.id !== 'none' && !saverById(saverCfg.id)) saverCfg.id = 'snow';
+  const saverCfg = Object.assign({ id: DEFAULT_SAVER, wait: 90 }, store.get('summit98.saver', null) || {});
+  if (saverCfg.id !== 'none' && !saverById(saverCfg.id)) saverCfg.id = DEFAULT_SAVER;      // also retires ids stored by older versions
   const idleMs = () => (Number(options.screensaverMs) > 0 ? Number(options.screensaverMs) : Math.max(15, Number(saverCfg.wait) || 90) * 1000);
 
   const sys = {
@@ -273,7 +273,11 @@ export function createOS(rootEl, bridge, options = {}) {
     getState: () => state,
     /** Removable media: mountDisk('A:' | 'D:', { label, files }) or mountDisk(drive, null) to empty the drive. */
     mountDisk: (drive, disk) => sys.fs.mount(drive, disk),
-    /** Screensaver: { id: 'snow'|'stars'|'ribbons'|'logo'|'blank'|'none', wait: seconds }. */
+    /** Screensaver: { id: one of `screensavers` or 'none', wait: seconds }. The default is 'pipes'. */
+    screensavers: SAVERS.map(s => ({ id: s.id, name: s.name })),
+    previewScreensaver: id => startSaver(id),
+    /** { id, state, canvas } of the saver on screen, or null (test hook) */
+    screensaverInfo: () => saver.info(),
     getScreensaver: () => ({ ...saverCfg }),
     setScreensaver: cfg => sys.saver.set(cfg),
     screensaverActive: () => saver.active(),

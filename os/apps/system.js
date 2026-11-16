@@ -219,6 +219,7 @@ export const display = {
         button('Cancel', () => win.close(), { small: true })),
     );
     wait.refresh();
+    list.reveal();              // twelve entries in a six-row box: start with the current one in view
     showPreview(chosen);
     win.on('close', () => { stop?.(); stop = null; });
     return win;

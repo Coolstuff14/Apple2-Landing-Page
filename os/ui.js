@@ -73,9 +73,16 @@ export function listBox(sys, opts = {}) {
       return row;
     }));
   }
+  /** scroll the list (only the list: never an ancestor) so the selected row is in view */
+  function reveal() {
+    const c = el.children[sel], first = el.children[0]; if (!c || !first) return;
+    const top = c.offsetTop - first.offsetTop, bottom = top + c.offsetHeight;
+    if (top < el.scrollTop) el.scrollTop = top; else if (bottom > el.scrollTop + el.clientHeight - 4) el.scrollTop = bottom - el.clientHeight + 4;
+  }
   function select(i, silent) {
     sel = i;
     [...el.children].forEach((c, j) => c.classList.toggle('sel', j === sel));
+    reveal();
     if (!silent) opts.onSelect?.(rows[i], i);
   }
   el.addEventListener('keydown', e => {
@@ -88,6 +95,7 @@ export function listBox(sys, opts = {}) {
     el,
     setRows(r, keep) { rows = r; if (!keep) sel = -1; render(); },
     select: (i, silent) => select(i, silent),
+    reveal,
     selected: () => (sel >= 0 ? rows[sel] : null),
     index: () => sel,
   };
