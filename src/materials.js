@@ -1,6 +1,7 @@
 // Surface shaders. Baked surfaces are  albedo × lightmap  plus a view-dependent reflection taken from
 // path-traced panoramas of the same room (box-projected so reflections line up with the walls).
 import * as THREE from 'three';
+import { WATER_GLSL } from './water.js';
 
 // Baked surfaces carry two per-vertex ids written by the Blender export: _item (which logical object) and
 // _sub (index inside it: keyboard key, book spine, CD ...). They drive hover feedback and the few vertex
@@ -68,7 +69,7 @@ void main() {
   gl_Position = projectionMatrix * viewMatrix * wp;
 }`;
 
-const ENV_GLSL = /* glsl */`
+export const ENV_GLSL = /* glsl */`
 uniform sampler2D tEnv;
 uniform vec3 uEnvPos, uBoxMin, uBoxMax;
 uniform float uEnvScale, uPackSqrt;
@@ -104,6 +105,9 @@ uniform sampler2D map;
 uniform vec3 uColor;
 uniform float uUseMap, uSpec, uMetal, uAlpha, uDebug, uLmScale;
 ${ENV_GLSL}
+#ifdef TANK
+${WATER_GLSL}
+#endif
 void main() {
   vec4 tex = uUseMap > 0.5 ? texture2D(map, vUv) : vec4(1.0);
   float a = tex.a * uAlpha;
@@ -128,9 +132,18 @@ void main() {
     float wv = fract(sin(floor(vP.x * 31.0) * 12.9898 + floor(vP.y * 27.0) * 78.233 + floor(vP.z * 29.0) * 37.719) * 43758.5453);
     albedo = mix(albedo, vec3(0.36, 0.23, 0.07) * (0.5 + 1.6 * dot(albedo, vec3(0.333))), clamp(uWilt * 1.7 - wv * 0.7, 0.0, 1.0));
   #endif
+  #ifdef TANK_DETAIL
+    // seen from a fish's distance the albedo texture runs out: add grain that fades in as the camera closes in
+    albedo *= mix(1.0, 0.66 + 0.68 * grain(vP), smoothstep(0.55, 0.10, distance(cameraPosition, vP)));
+  #endif
   vec3 irr = texture2D(tLM, vUv1).rgb;
   irr = mix(irr, irr * irr, uPackSqrt) * uLmScale;
   vec3 col = albedo * irr * (1.0 - 0.55 * uMetal);
+  #ifdef TANK
+    float wet = inWater(vP);
+    col += albedo * uTankLight * (caustic(vP) * 0.50 * (0.25 + 0.75 * clamp(normalize(vN).y, 0.0, 1.0)) * wet);
+    col += albedo * caveGlow(vP) * 3.0 * wet;
+  #endif
   if (uDebug > 0.5) col = irr * 0.5;
   #ifdef USE_SPEC
     vec3 N = normalize(vN);
@@ -143,6 +156,9 @@ void main() {
     // crude specular occlusion: surfaces sitting in deep shadow should not mirror a bright room
     float occ = clamp(dot(irr, vec3(0.3333)) * 6.0, 0.08, 1.0);
     col += envSample(vP, R) * F * uSpec * occ * (uDebug > 0.5 ? 0.0 : 1.0);
+  #endif
+  #ifdef TANK
+    col = waterFog(col, vP);
   #endif
   float hl = (uHover.x > 0.5 && abs(vItem - uHover.x) < 0.5) ? uHover.y : 0.0;
   col = col * (1.0 + 0.16 * hl) + vec3(0.012, 0.009, 0.004) * hl;      // hover feedback: a slight lift, no extra geometry
@@ -165,6 +181,8 @@ export function makeBakedMaterial(src, lmTex, envTex, shared, atlas = 'A') {
   if (src.name === 'leaf') feat.WILT = 1;
   if (src.name === 'leaf' || src.name === 'stem') feat.FOLIAGE = 1;
   if (src.name === 'disks') feat.HIDE_SUB = 1;
+  const tank = atlas === 'H' && shared.tankU ? shared.tankU : null;      // the aquarium: caustics, water fog, close-up grain
+  if (tank) { feat.TANK = 1; if (/^(gravel|tank_rock|driftwood|wood_mid)$/.test(src.name)) feat.TANK_DETAIL = 1; }
   const m = new THREE.ShaderMaterial({
     name: src.name,
     uniforms: {
@@ -177,6 +195,7 @@ export function makeBakedMaterial(src, lmTex, envTex, shared, atlas = 'A') {
       uHover: shared.uHover, uKeys: shared.uKeys, uKeyDown: shared.uKeyDown, uMouseItem: shared.uMouseItem, uMouseOff: shared.uMouseOff,
       uSway: shared.uSway, uTime: shared.uTime, uSpin: shared.uSpin,
       uRaise: shared.uRaise, uRaiseTop: shared.uRaiseTop, uStage: shared.uStage, uWilt: shared.uWilt, uHideSub: shared.uHideSub, uLeafFade: shared.uLeafFade,
+      ...(tank || {}),
     },
     vertexShader: BAKED_VERT, fragmentShader: BAKED_FRAG,
     side: ud.two_sided ? THREE.DoubleSide : THREE.FrontSide,

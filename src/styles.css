@@ -11,6 +11,10 @@ html, body { height: 100%; margin: 0; background: #050403; overflow: hidden; ove
 #gl.pass { pointer-events: none; }
 #grain { z-index: 3; pointer-events: none; mix-blend-mode: multiply;
   background: radial-gradient(ellipse at 50% 46%, rgba(255,255,255,1) 55%, rgba(120,100,90,1) 100%); opacity: .9; }
+#fade { position: absolute; inset: 0; z-index: 4; background: #000; opacity: 0; pointer-events: none; transition: opacity .32s linear; }
+#fade.on { opacity: 1; }
+body.swimming #gl { cursor: crosshair; }
+body.swimming #title, body.swimming #btn-reset { opacity: 0; pointer-events: none; }
 .crt-carrier { position: relative; overflow: hidden; background: #000; }
 .crt-mount { width: 640px; height: 480px; position: absolute; left: 0; top: 0; transform-origin: 0 0; overflow: hidden; background: #000; outline: none; }
 .crt-fallback { position: absolute; inset: 0; display: grid; place-items: center; background: #008080; color: #fff; font-size: 16px; }

@@ -6,6 +6,11 @@ import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer
 import { LayerCompositor, loadLayerTexture } from './lighting.js';
 import { makeBakedMaterial, makeScreenMaterial, makeEmissiveMaterial, makeLavaMaterial, makeBulbMaterial, makeProxyMaterial } from './materials.js';
 import { ITEM_DEFS, stereoRegion, STEREO_LABEL, keyFor, drawCalendar } from './items.js';
+import { createTankUniforms } from './water.js';
+import { createAquarium } from './aquarium.js';
+import { SPECIES } from './fishkit.js';
+import { createFishMode } from './fishmode.js';
+import { createFishAudio } from './fishaudio.js';
 
 const $ = (s) => document.querySelector(s);
 const Q = new URLSearchParams(location.search);
@@ -28,10 +33,14 @@ boot().catch((err) => {
 
 async function boot() {
   progress(0.03, 'Dialing up…');
-  const [meta, lmInfo] = await Promise.all([
-    fetch(ASSETS + 'meta.json').then((r) => r.json()),
-    fetch(ASSETS + 'lightmaps.json').then((r) => r.json()),
-  ]);
+  // room.glb, meta.json and the lightmaps must come from one bake, and the host caches assets/** for a day. The two
+  // small JSON files are therefore always revalidated, and every other asset URL carries a fingerprint of them.
+  const [metaTxt, lmTxt] = await Promise.all(['meta.json', 'lightmaps.json'].map((f) => fetch(ASSETS + f, { cache: 'no-cache' }).then((r) => r.text())));
+  const meta = JSON.parse(metaTxt), lmInfo = JSON.parse(lmTxt);
+  let fp = 2166136261;
+  for (const t of [metaTxt, lmTxt]) for (let i = 0; i < t.length; i++) fp = Math.imul(fp ^ t.charCodeAt(i), 16777619);
+  const BAKE = (fp >>> 0).toString(36);
+  THREE.DefaultLoadingManager.setURLModifier((url) => (url.startsWith(ASSETS) && !url.includes('?') ? `${url}?v=${BAKE}` : url));
   const LAYERS = lmInfo.layers;
 
   // ------------------------------------------------------------------ renderers
@@ -104,6 +113,7 @@ async function boot() {
     uProxyLight: { value: new THREE.Color(0.3, 0.26, 0.2) },
     uRaise: { value: 0 }, uRaiseTop: { value: meta.window.z1 - 0.05 }, uStage: { value: 0 }, uWilt: { value: 0 }, uHideSub: { value: -1 }, uLeafFade: { value: 0 },
   };
+  shared.tankU = createTankUniforms(meta, shared);      // null for asset sets baked before the aquarium existed
   const fx = {};
   const matCache = new Map();
   const pickables = [], matByName = {}, atlasMeshes = {};
@@ -152,6 +162,8 @@ async function boot() {
   const lavaC = b2t([meta.shelf.lava_xy[0], meta.shelf.lava_xy[1], meta.shelf.lava_base_z]);
   const lavaMat = makeLavaMaterial(lavaC, meta.shelf.lava_base_z + 0.12, 0.165);
   if (fx.fx_lava_glass) fx.fx_lava_glass.material = lavaMat;
+
+  const aq = createAquarium({ scene, meta, fx, shared, envTex: envComp[0].texture, still: Q.has('still'), reduceMotion, query: Q });
 
   // soft halos around the two practical lights (additive, alpha-preserving so the CRT hole stays intact)
   const haloTex = (() => {
@@ -209,7 +221,7 @@ async function boot() {
   const L = meta.lights;
   const tints = {};                       // layer name -> colour, consumed by every compositor
   // artistic gains on top of the baked nominal intensities (exact, since each light is its own layer)
-  const GAIN = { sun: num('gsun', 1.0), sky: num('gsky', 2.5), lamp: num('glamp', 0.75), lava: num('glava', 0.7), crt: num('gcrt', 0.45), open: num('gopen', 0.6) };
+  const GAIN = { sun: num('gsun', 1.0), sky: num('gsky', 2.5), lamp: num('glamp', 0.75), lava: num('glava', 0.7), crt: num('gcrt', 0.45), open: num('gopen', 0.6), tank: num('gtank', 1.0) };
   const col = (a) => new THREE.Color(a[0], a[1], a[2]);
   const LAVA_LIGHT = new THREE.Color(0.10, 0.62, 1.0);      // blue liquid with green wax: the baked layer is white, so the colour is a free runtime choice
   const sunHi = col(L.sun.color), sunLo = new THREE.Color(1.0, 0.30, 0.09), skyDay = col(L.sky.color), skyNight = new THREE.Color(0.10, 0.16, 0.34);
@@ -227,6 +239,7 @@ async function boot() {
       lamp: col(L.lamp.color).multiplyScalar(cur.lamp * GAIN.lamp),
       lava: LAVA_LIGHT.clone().multiplyScalar(cur.lava * flick * GAIN.lava),
       crt: crtColor.clone().multiplyScalar(cur.crt * GAIN.crt),
+      tank: aq ? aq.tint.clone().multiplyScalar(GAIN.tank) : new THREE.Color(0, 0, 0),
     };
     Object.assign(tints, out);
   }
@@ -246,7 +259,7 @@ async function boot() {
   const controls = new OrbitControls(camera, canvas);
   controls.target.copy(home.target);
   Object.assign(controls, { enableDamping: !Q.has('still'), dampingFactor: 0.08, rotateSpeed: 0.42, zoomSpeed: 0.7, panSpeed: 0.5,
-    minDistance: 0.4, maxDistance: 3.3, minPolarAngle: 0.85, maxPolarAngle: 1.9, minAzimuthAngle: -0.95, maxAzimuthAngle: 1.3 });
+    minDistance: 0.4, maxDistance: 3.3, minPolarAngle: 0.85, maxPolarAngle: 1.9, minAzimuthAngle: -1.75, maxAzimuthAngle: 1.3 });      // -1.57 faces the right wall (the aquarium) head-on
   controls.update();
   const B = meta.bounds;
   const camMin = new THREE.Vector3(B.lo[0], B.lo[2], -B.hi[1]), camMax = new THREE.Vector3(B.hi[0], B.hi[2], -B.lo[1]);
@@ -262,7 +275,9 @@ async function boot() {
   function fit() {
     const w = window.innerWidth, h = window.innerHeight, a = w / h;
     const v = a >= REF_ASPECT ? 2 * Math.atan(Math.tan(HFOV / 2) / REF_ASPECT) : Math.min(2 * Math.atan(Math.tan(HFOV / 2) / a), 1.35);
-    camera.fov = THREE.MathUtils.radToDeg(v); camera.aspect = a; camera.updateProjectionMatrix();
+    roomFov = THREE.MathUtils.radToDeg(v);
+    if (!fm?.on) camera.fov = roomFov;          // while you are a fish the swim controller owns the lens
+    camera.aspect = a; camera.updateProjectionMatrix();
     renderer.setSize(w, h, false); css.setSize(w, h);
     dust.uniforms.uScale.value = Math.min(h, 1100) * renderer.getPixelRatio() / 1000;
     if (mode === 'monitor' && !tween) { const v2 = monitorView(); camera.position.copy(v2.pos); controls.target.copy(v2.target); camera.lookAt(v2.target); }
@@ -274,7 +289,8 @@ async function boot() {
     const d = Math.max((scr.h / 2) / Math.tan(v / 2), (scr.w / 2) / Math.tan(hf / 2)) / 0.84;
     return { pos: scrC.clone().add(new THREE.Vector3(0, 0, d)), target: scrC.clone() };
   }
-  let mode = 'room';                 // 'room' | 'monitor'
+  let mode = 'room';                 // 'room' | 'monitor' | 'notebook' | 'fish'
+  let fm = null, roomFov = 31;       // fish mode (created further down, once the aquarium's items exist)
   let tween = null, saved = null;
   function flyTo(view, ms, after) {
     const from = { pos: camera.position.clone(), target: controls.target.clone() };
@@ -352,6 +368,8 @@ async function boot() {
     itemById.set(it.id, rec); itemByKey.set(it.key, rec);
   }
   pickables.forEach((o) => { if (o.userData.itemKey) o.userData.itemId = itemByKey.get(o.userData.itemKey)?.id; });
+  const FISH_ID = 9001;                      // the fish are not baked geometry: one runtime item, sub = which fish
+  if (aq) { const rec = { id: FISH_ID, key: 'fish', ...ITEM_DEFS.fish, box: new THREE.Box3(aq.lo.clone(), aq.hi.clone()) }; itemById.set(FISH_ID, rec); itemByKey.set('fish', rec); }
   {  // the gaps between the slats should still read as "blinds"
     const w = meta.window;
     const proxy = new THREE.Mesh(new THREE.PlaneGeometry(w.y1 - w.y0, w.z1 - w.z0), new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }));
@@ -365,7 +383,13 @@ async function boot() {
   function pickAt(x, y) {
     ndc.set((x / window.innerWidth) * 2 - 1, -(y / window.innerHeight) * 2 + 1);
     ray.setFromCamera(ndc, camera);
-    for (const h of ray.intersectObjects(pickList, false)) {
+    const hits = ray.intersectObjects(pickList, false);
+    const fish = aq ? aq.pickFish(ray.ray) : null;       // fish swim behind glass: they win over the pane, lose to anything opaque in front
+    for (const h of hits) {
+      if (fish && (h.object.userData.tankGlass || fish.dist < h.distance)) {
+        const solid = hits.find((o) => !o.object.userData.tankGlass);
+        if (!solid || fish.dist < solid.distance) return { item: itemById.get(FISH_ID), sub: fish.index, uv: null, point: fish.fish.pos.clone(), mat: '' };
+      }
       const g = h.object.geometry; let id = h.object.userData.itemId, sub = 0;
       if (id == null && g.attributes._item && h.face) { id = Math.round(g.attributes._item.getX(h.face.a)); sub = Math.round(g.attributes._sub ? g.attributes._sub.getX(h.face.a) : 0); }
       if (h.object.userData.atlasKey === 'G' && sub > shared.uStage.value + 0.5) continue;      // plant growth that has not appeared yet
@@ -543,6 +567,61 @@ async function boot() {
     calendar: () => turnCalendar(),
   };
 
+  // ---- aquarium: hood light (two tubes), air pump, food; the fish themselves are in aquarium.js
+  const tankView = () => {      // head-on, wide enough for the pump and the food can beside the tank, whatever the aspect ratio
+    const T = meta.tank, v = THREE.MathUtils.degToRad(roomFov), hf = 2 * Math.atan(Math.tan(v / 2) * camera.aspect);      // the room lens, also while you are a fish
+    const y0 = T.outer_lo[1] - 0.05, y1 = Math.max(T.outer_hi[1], T.food[1] + 0.04, T.pump[1] + 0.07) + 0.03, cz = -(y0 + y1) / 2;
+    const h = T.outer_hi[2] - T.outer_lo[2] + 0.12, cy = (T.outer_hi[2] + T.outer_lo[2]) / 2;
+    const d = Math.max((h / 2) / Math.tan(v / 2), ((y1 - y0) / 2) / Math.tan(hf / 2));
+    return { pos: clampPos(new THREE.Vector3(T.front - d, cy + 0.04, cz)), target: new THREE.Vector3(T.front + 0.16, cy - 0.01, cz) };
+  };
+  const nearTank = () => !!aq && camera.position.distanceTo(b2t(meta.tank.center)) < 2.1;
+  if (aq) {
+    const cap = (t) => t.charAt(0).toUpperCase() + t.slice(1), sw = (v) => (v ? 'on' : 'off');
+    RUN.tank_hood = () => { aq.cycleLights(); say('Aquarium light', cap(aq.lightName()) + '.', 'Click to change it', 'tank_hood'); };
+    RUN.tank_sw_day = () => aq.toggle('day'); RUN.tank_sw_blue = () => aq.toggle('blue');
+    RUN.tank_pump = () => aq.toggle('bubbler');
+    RUN.tank_food = () => { const ok = aq.feed(); say('Fish food', ok ? 'A pinch of flakes on the water.' : 'That is plenty for now. Leftovers foul the water.', '', 'tank_food'); };
+    RUN.fish = (hit) => { if (!nearTank()) { examine({ item: itemByKey.get('aquarium'), sub: 0, uv: null, point: null, mat: '' }); return; } enterFish(hit.sub); };
+    DESCRIBE.tank_hood = () => ({ name: 'Aquarium hood', text: `Light: ${aq.lightName()}.`, hint: 'Click to change the light' });
+    DESCRIBE.tank_sw_day = () => ({ name: `Daylight tube — ${sw(aq.state.day)}`, text: '', hint: 'Click to switch' });
+    DESCRIBE.tank_sw_blue = () => ({ name: `Blue tube — ${sw(aq.state.blue)}`, text: '', hint: 'Click to switch' });
+    DESCRIBE.tank_pump = () => ({ name: `Air pump — ${sw(aq.state.bubbler)}`, text: aq.state.bubbler ? 'Humming. It feeds the chest and the air stone.' : 'Silent.', hint: 'Click to switch the bubbles' });
+    DESCRIBE.tank_food = () => ({ name: 'Fish food', text: 'Tropical flakes.', hint: 'Click to feed the fish' });
+    DESCRIBE.aquarium = () => ({ name: 'Aquarium', text: ITEM_DEFS.aquarium.text, hint: nearTank() ? 'Click a fish to swim as that fish' : 'Click to look closer' });
+    DESCRIBE.fish = (hit) => ({ name: SPECIES[aq.fishes[hit.sub].kind].name, text: '', hint: nearTank() ? 'Click to swim as this fish' : 'Click to look closer' });
+  }
+  // ---- swimming as one of the fish (fishmode.js); the party under the rock is built the first time you find it
+  const backBtn = $('#btn-back'), backHtml = backBtn.innerHTML;
+  const fishAudio = createFishAudio();
+  if (aq) {
+    fm = createFishMode({
+      camera, canvas, aq, audio: fishAudio, roomFov: () => roomFov, tankView, reduceMotion, still: Q.has('still'),
+      makeRave: () => (raveMod ? raveMod.createRave({ reduceMotion }) : null),
+      hooks: {
+        say: (name, text, hint, key, ms) => { ptr.x = window.innerWidth * 0.5 - 115; ptr.y = window.innerHeight * 0.86; say(name, text, hint, key, ms); },
+        onEnter: () => {
+          if (!raveMod && !raveLoading) { raveLoading = true; import('./rave.js').then((m) => { raveMod = m; }).catch((e) => { raveLoading = false; console.warn('the party could not be loaded', e); }); }
+          mode = 'fish'; controls.enabled = false; tween = null; examined = null; unsay(); hideTip(); aq.setHover(-1);
+          document.body.classList.add('swimming'); backBtn.innerHTML = '← Back to the room <kbd>Esc</kbd>'; backBtn.hidden = false;
+        },
+        onSwim: () => {          // inside the water: the CRT is a speck at best, so stop re-placing its DOM layer every frame
+          $('#css3d').style.visibility = 'hidden'; screenMat.uniforms.uHole.value = 0;
+          const coarse = matchMedia('(pointer: coarse)').matches;
+          ptr.x = window.innerWidth * 0.5 - 115; ptr.y = window.innerHeight * 0.86;
+          say(`You are a ${SPECIES[fm.me.kind].name.toLowerCase()}`, coarse ? 'Drag to steer. Keep a finger down to swim fast.' : 'The pointer steers (or the arrow keys). Hold the button or Space to swim fast.', coarse ? '' : 'M mutes the sound', 'fish', 7000);
+        },
+        onSurface: () => { $('#css3d').style.visibility = ''; if (Q.get('noos') !== '1') screenMat.uniforms.uHole.value = 1; cssDirty = true; lightsDirty = true; },
+        onExit: (view) => {
+          mode = 'room'; document.body.classList.remove('swimming'); backBtn.hidden = true; backBtn.innerHTML = backHtml;
+          controls.target.copy(view.target); camera.up.set(0, 1, 0); camera.lookAt(view.target); controls.enabled = true; unsay(); hideTip(); lightsDirty = true; ptr.dirty = true; fit();
+        },
+      },
+    });
+  }
+  let raveMod = null, raveLoading = false;
+  function enterFish(i) { if (fm && mode === 'room') fm.enter(i); }
+
   // ---- bed: two baked states
   RUN.bed = () => { if (!HAS.bed) return; state.bedMade = !state.bedMade; applyVariants(); ptr.dirty = true; };
   DESCRIBE.bed = () => ({ name: 'Bed', text: state.bedMade ? 'Made, for once.' : 'Unmade.', hint: HAS.bed ? (state.bedMade ? 'Click to mess it up again' : 'Click to make the bed') : '' });
@@ -649,7 +728,7 @@ async function boot() {
 
   // ---- photo board: the user's albums. Each frame shows one picture of an album; its name is the handwritten
   // note; clicking the frame you are looking at flips to the album's next picture.
-  const userAssets = await fetch(ASSETS + 'user/manifest.json').then((r) => (r.ok ? r.json() : {})).catch(() => ({}));
+  const userAssets = await fetch(ASSETS + 'user/manifest.json', { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : {})).catch(() => ({}));
   const loadUserTex = async (file) => {
     const t = await texLoader.loadAsync(ASSETS + 'user/' + file);
     t.flipY = false; t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = shared.anisotropy; t.wrapS = t.wrapT = THREE.RepeatWrapping; return t;
@@ -700,6 +779,7 @@ async function boot() {
   const CROUCH = new THREE.Vector3(1.5, 0.95, 1.9);      // low spot right of the bed with a clear line under the desk
   function viewFor(it, hit) {
     if ((it.key === 'pin_photo' || it.key === 'pin_note') && hit && hit.point && slotView[pinKey(hit)]) { const v = slotView[pinKey(hit)]; return { pos: v.pos.clone(), target: v.target.clone() }; }
+    if (it.key === 'aquarium' && aq) return tankView();      // framed for the current aspect ratio
     const a = authored[it.view || it.key];
     if (a) return { pos: a.pos.clone(), target: a.target.clone() };
     const spread = it.spread && hit?.point;             // items in several places: go to the part that was clicked
@@ -731,6 +811,7 @@ async function boot() {
     hover = ptr.on && mode === 'room' && !tween && !down ? pickAt(ptr.x, ptr.y) : null;
     shared.uHover.value.x = hover && hover.item.mode !== 'hover' && !hover.item.nohl ? hover.item.id : 0;
     canvas.classList.toggle('hot', !!hover && hover.item.mode !== 'hover');
+    aq?.setHover(hover && hover.item.key === 'fish' ? hover.sub : -1);
     if (note && performance.now() < note.until && (!hover || hover.item.key === note.key || (hover.item.key2 && hover.item.key2 === note.key) || Math.hypot(ptr.x - note.x, ptr.y - note.y) < 28)) return;
     note = null;
     if (!hover || hover.item.silent) { tip.hidden = true; return; }
@@ -781,13 +862,13 @@ async function boot() {
   window.addEventListener('blur', () => keyTarget.fill(0));
   window.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape' || e.defaultPrevented) return;
-    if (mode === 'monitor') exitFocus(); else if (mode === 'notebook') exitNotebook();
+    if (mode === 'monitor') exitFocus(); else if (mode === 'notebook') exitNotebook(); else if (mode === 'fish') fm.exit();
   });
 
   // ------------------------------------------------------------------ the only on-screen controls: reset view, step away, clear page
   function syncHud() { /* nothing on screen mirrors room state now; the desktop's Room Control listens through the bridge */ }
   $('#btn-reset').addEventListener('click', () => { if (mode !== 'room') return; examined = null; unsay(); flyTo(home, 900, () => { controls.enabled = true; ptr.dirty = true; }); });
-  $('#btn-back').addEventListener('click', () => (mode === 'notebook' ? exitNotebook() : exitFocus()));
+  $('#btn-back').addEventListener('click', () => (mode === 'notebook' ? exitNotebook() : mode === 'fish' ? fm.exit() : exitFocus()));
   $('#btn-clear').addEventListener('click', nbClear);
 
   // ------------------------------------------------------------------ loop
@@ -799,7 +880,7 @@ async function boot() {
   if (Q.get('focus') === 'monitor') { focusMonitor(); }
   const baseExposure = num('exposure', 1.1);
   const clock = new THREE.Clock();
-  let lastComposite = -1, frames = 0;
+  let lastComposite = -1, frames = 0, partied = false;
   // Frame pacing. Full display rate while anything moves (input in the last 2 s, camera, tweens, flying disks,
   // lights easing, CRT power animation); otherwise only the slow ambient motion is left (lava wax, dust, LEDs)
   // and IDLE_FPS is plenty (10 fps while the browser window is not focused). ?fps=N overrides the idle rate (0 = never throttle).
@@ -827,6 +908,7 @@ async function boot() {
     step('lamp', state.lamp ? 1 : 0); step('lava', state.lava ? 1 : 0); step('sun', state.sun); step('crt', state.monitor && monPower ? 1 : 0);
     { const t = state.blinds ? 1 : 0; if (cur.blinds !== t) { cur.blinds = reduceMotion || Q.has('still') ? t : THREE.MathUtils.clamp(cur.blinds + (t > cur.blinds ? dt : -dt) / 0.9, 0, 1); lightsDirty = true; applyVariants(); } }
     if (!crtColor.equals(crtTarget)) { crtColor.lerp(crtTarget, k); if (Math.abs(crtColor.r - crtTarget.r) + Math.abs(crtColor.g - crtTarget.g) + Math.abs(crtColor.b - crtTarget.b) < 0.004) crtColor.copy(crtTarget); lightsDirty = true; }
+    if (aq && aq.update(dt, time, { camera, pxHeight: canvas.height, inside: !!fm?.inside, beat: fm?.beat ?? null })) lightsDirty = true;
     const easing = lightsDirty;          // a light is still fading towards its target
     const flickerDue = cur.lava > 0.01 && time - lastComposite > FLICKER_S && !Q.has('still');   // the lava lamp's slow 3 % shimmer
     if (lightsDirty || flickerDue) {
@@ -885,7 +967,8 @@ async function boot() {
       if (f.t >= 1) { media.flights.splice(i, 1); f.done(); }
     }
 
-    if (tween) {
+    if (mode === 'fish') fm.update(dt);
+    else if (tween) {
       const f = clamp01((performance.now() - tween.t0) / tween.ms), e = f < 0.5 ? 4 * f * f * f : 1 - Math.pow(-2 * f + 2, 3) / 2;
       camera.position.lerpVectors(tween.from.pos, tween.to.pos, e);
       controls.target.lerpVectors(tween.from.target, tween.to.target, e);
@@ -894,16 +977,18 @@ async function boot() {
     } else if (mode === 'room') {
       controls.update(); clampCamera(); camera.lookAt(controls.target);
     }
-    renderer.render(scene, camera);
+    const party = mode === 'fish' && fm.where === 'rave' && fm.rave;
+    if (party) { renderer.toneMappingExposure = 1.0; renderer.render(fm.rave.scene, camera); partied = true; }
+    else { if (partied) { partied = false; lightsDirty = true; } renderer.render(scene, camera); }
     const camMoved = cameraMoved();
-    if (camMoved || cssDirty || frames < 3) { css.render(cssScene, camera); cssDirty = false; }   // the DOM desktop only needs re-placing when the view changes
-    busy = camMoved || easing || !!tween || media.flights.length > 0 || crtPow !== powT || cur.blinds !== (state.blinds ? 1 : 0)
+    if ((camMoved || cssDirty || frames < 3) && !fm?.hideCss) { css.render(cssScene, camera); cssDirty = false; }   // the DOM desktop only needs re-placing when the view changes
+    busy = mode === 'fish' || camMoved || easing || !!tween || media.flights.length > 0 || crtPow !== powT || cur.blinds !== (state.blinds ? 1 : 0)
       || performance.now() - lastInput < 2000 || globeVel > 1e-3;
     if (++frames === 3) { loaderEl.classList.add('done'); document.body.dataset.ready = '1'; }
   }
   const project = (bp) => { const v = b2t(bp).project(camera); return [(v.x + 1) / 2 * window.innerWidth, (1 - v.y) / 2 * window.innerHeight]; };
   const probe = (x, y) => { const h = pickAt(x, y); return h ? { key: h.item.key, sub: h.sub, label: h.item.label, tip: tipFor(h), mode: h.item.mode || 'examine', hasText: !!h.item.text, hasAct: !!(RUN[h.item.key2 || h.item.key] || ACT[h.item.key]) } : null; };
-  window.__room = { get frames() { return frames; }, state, setRoom, focusMonitor, exitFocus, camera, controls, meta, project, probe,
+  window.__room = { tank: aq, get fish() { return fm; }, tankView, get fishAudio() { return fishAudio; }, get frames() { return frames; }, state, setRoom, focusMonitor, exitFocus, camera, controls, meta, project, probe,
     items: [...itemByKey.values()].map((i) => ({ key: i.key, label: i.label, mode: i.mode || 'examine', text: i.text || '', run: !!RUN[i.key2 || i.key], act: !!ACT[i.key] })),
     get os() { return os; }, get examined() { return examined; }, get monPower() { return monPower; }, get calMonth() { return calMonth; },
     get keys() { return Array.from(shared.uKeys.value.slice(0, KB.keys.length)); }, get mouseOffset() { return shared.uMouseOff.value.toArray(); },

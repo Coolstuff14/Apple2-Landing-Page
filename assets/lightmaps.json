@@ -4,48 +4,54 @@
    "layers": {
     "sun": {
      "file": "lm/A_sun.webp",
-     "range": 2.2309842109680176,
+     "range": 2.223576784133911,
      "size": 2048,
      "light": "sun"
     },
     "sky": {
      "file": "lm/A_sky.webp",
-     "range": 0.9714996218681335,
+     "range": 0.9719409942626953,
      "size": 1024,
      "light": "sky"
     },
     "lamp": {
      "file": "lm/A_lamp.webp",
-     "range": 1.4005217552185059,
+     "range": 1.4006985425949097,
      "size": 1024,
      "light": "lamp"
     },
     "lava": {
      "file": "lm/A_lava.webp",
-     "range": 6.872445106506348,
+     "range": 6.788839340209961,
      "size": 1024,
      "light": "lava"
     },
     "crt": {
      "file": "lm/A_crt.webp",
-     "range": 1.3207167387008667,
+     "range": 1.3208345174789429,
      "size": 1024,
      "light": "crt"
     },
     "sun_open": {
      "file": "lm/A_sun_open.webp",
-     "range": 2.4079501628875732,
+     "range": 2.399869680404663,
      "size": 2048,
      "light": "sun"
     },
     "sky_open": {
      "file": "lm/A_sky_open.webp",
-     "range": 0.9714564681053162,
+     "range": 0.97194904088974,
      "size": 1024,
      "light": "sky"
+    },
+    "tank": {
+     "file": "lm/A_tank.webp",
+     "range": 0.7100593447685242,
+     "size": 1024,
+     "light": "tank"
     }
    },
-   "coverage": 0.6061220169067383,
+   "coverage": 0.6070370674133301,
    "chroma": {
     "file": "lm/A_chroma.webp",
     "tile": 512,
@@ -58,7 +64,8 @@
      "lava",
      "crt",
      "sun_open",
-     "sky_open"
+     "sky_open",
+     "tank"
     ]
    }
   },
@@ -66,13 +73,13 @@
    "layers": {
     "sun": {
      "file": "lm/B_sun.webp",
-     "range": 2.247884750366211,
+     "range": 2.2479045391082764,
      "size": 2048,
      "light": "sun"
     },
     "sky": {
      "file": "lm/B_sky.webp",
-     "range": 0.2396322637796402,
+     "range": 0.23963172733783722,
      "size": 1024,
      "light": "sky"
     },
@@ -84,30 +91,36 @@
     },
     "lava": {
      "file": "lm/B_lava.webp",
-     "range": 30.795713424682617,
+     "range": 30.795604705810547,
      "size": 1024,
      "light": "lava"
     },
     "crt": {
      "file": "lm/B_crt.webp",
-     "range": 2.172102212905884,
+     "range": 2.172056198120117,
      "size": 1024,
      "light": "crt"
     },
     "sun_open": {
      "file": "lm/B_sun_open.webp",
-     "range": 2.988389730453491,
+     "range": 2.9883711338043213,
      "size": 2048,
      "light": "sun"
     },
     "sky_open": {
      "file": "lm/B_sky_open.webp",
-     "range": 0.42927274107933044,
+     "range": 0.42916613817214966,
      "size": 1024,
      "light": "sky"
+    },
+    "tank": {
+     "file": "lm/B_tank.webp",
+     "range": 0.024549810215830803,
+     "size": 1024,
+     "light": "tank"
     }
    },
-   "coverage": 0.4848926067352295,
+   "coverage": 0.48488879203796387,
    "chroma": {
     "file": "lm/B_chroma.webp",
     "tile": 512,
@@ -120,7 +133,8 @@
      "lava",
      "crt",
      "sun_open",
-     "sky_open"
+     "sky_open",
+     "tank"
     ]
    }
   },
@@ -128,33 +142,39 @@
    "layers": {
     "sun": {
      "file": "lm/C_sun.webp",
-     "range": 2.2499518394470215,
+     "range": 2.249840259552002,
      "size": 2048,
      "light": "sun"
     },
     "sky": {
      "file": "lm/C_sky.webp",
-     "range": 0.8458512425422668,
+     "range": 0.8458506464958191,
      "size": 1024,
      "light": "sky"
     },
     "lamp": {
      "file": "lm/C_lamp.webp",
-     "range": 0.8314198851585388,
+     "range": 0.8312408924102783,
      "size": 1024,
      "light": "lamp"
     },
     "lava": {
      "file": "lm/C_lava.webp",
-     "range": 0.016455497592687607,
+     "range": 0.016242992132902145,
      "size": 1024,
      "light": "lava"
     },
     "crt": {
      "file": "lm/C_crt.webp",
-     "range": 0.16910003125667572,
+     "range": 0.1688661426305771,
      "size": 1024,
      "light": "crt"
+    },
+    "tank": {
+     "file": "lm/C_tank.webp",
+     "range": 0.005432208068668842,
+     "size": 1024,
+     "light": "tank"
     }
    },
    "coverage": 0.15236330032348633,
@@ -168,7 +188,8 @@
      "sky",
      "lamp",
      "lava",
-     "crt"
+     "crt",
+     "tank"
     ]
    }
   },
@@ -188,21 +209,27 @@
     },
     "lamp": {
      "file": "lm/D_lamp.webp",
-     "range": 0.12449752539396286,
+     "range": 0.12437312304973602,
      "size": 512,
      "light": "lamp"
     },
     "lava": {
      "file": "lm/D_lava.webp",
-     "range": 0.016200920566916466,
+     "range": 0.016045181080698967,
      "size": 512,
      "light": "lava"
     },
     "crt": {
      "file": "lm/D_crt.webp",
-     "range": 0.09754069894552231,
+     "range": 0.0972864106297493,
      "size": 512,
      "light": "crt"
+    },
+    "tank": {
+     "file": "lm/D_tank.webp",
+     "range": 0.005600474309176207,
+     "size": 512,
+     "light": "tank"
     }
    },
    "coverage": 0.14862823486328125,
@@ -216,7 +243,8 @@
      "sky_open",
      "lamp",
      "lava",
-     "crt"
+     "crt",
+     "tank"
     ]
    }
   },
@@ -224,45 +252,51 @@
    "layers": {
     "sun": {
      "file": "lm/E_sun.webp",
-     "range": 0.9630668759346008,
+     "range": 0.9630652070045471,
      "size": 1024,
      "light": "sun"
     },
     "sky": {
      "file": "lm/E_sky.webp",
-     "range": 0.22619327902793884,
+     "range": 0.22609840333461761,
      "size": 512,
      "light": "sky"
     },
     "lamp": {
      "file": "lm/E_lamp.webp",
-     "range": 1.1489685773849487,
+     "range": 1.1485683917999268,
      "size": 512,
      "light": "lamp"
     },
     "lava": {
      "file": "lm/E_lava.webp",
-     "range": 0.08078375458717346,
+     "range": 0.08063695579767227,
      "size": 512,
      "light": "lava"
     },
     "crt": {
      "file": "lm/E_crt.webp",
-     "range": 0.20647642016410828,
+     "range": 0.2063634842634201,
      "size": 512,
      "light": "crt"
     },
     "sun_open": {
      "file": "lm/E_sun_open.webp",
-     "range": 1.5557770729064941,
+     "range": 1.5557565689086914,
      "size": 1024,
      "light": "sun"
     },
     "sky_open": {
      "file": "lm/E_sky_open.webp",
-     "range": 0.3295389413833618,
+     "range": 0.3293690085411072,
      "size": 512,
      "light": "sky"
+    },
+    "tank": {
+     "file": "lm/E_tank.webp",
+     "range": 0.030420677736401558,
+     "size": 512,
+     "light": "tank"
     }
    },
    "coverage": 0.6009159088134766,
@@ -278,7 +312,8 @@
      "lava",
      "crt",
      "sun_open",
-     "sky_open"
+     "sky_open",
+     "tank"
     ]
    }
   },
@@ -286,45 +321,51 @@
    "layers": {
     "sun": {
      "file": "lm/F_sun.webp",
-     "range": 0.057563599199056625,
+     "range": 0.0574980191886425,
      "size": 1024,
      "light": "sun"
     },
     "sky": {
      "file": "lm/F_sky.webp",
-     "range": 0.14189483225345612,
+     "range": 0.14177221059799194,
      "size": 512,
      "light": "sky"
     },
     "lamp": {
      "file": "lm/F_lamp.webp",
-     "range": 1.147239089012146,
+     "range": 1.1471467018127441,
      "size": 512,
      "light": "lamp"
     },
     "lava": {
      "file": "lm/F_lava.webp",
-     "range": 0.0816817581653595,
+     "range": 0.08141639083623886,
      "size": 512,
      "light": "lava"
     },
     "crt": {
      "file": "lm/F_crt.webp",
-     "range": 0.20594869554042816,
+     "range": 0.2058081179857254,
      "size": 512,
      "light": "crt"
     },
     "sun_open": {
      "file": "lm/F_sun_open.webp",
-     "range": 0.1823204755783081,
+     "range": 0.18229350447654724,
      "size": 1024,
      "light": "sun"
     },
     "sky_open": {
      "file": "lm/F_sky_open.webp",
-     "range": 0.20601820945739746,
+     "range": 0.2057184875011444,
      "size": 512,
      "light": "sky"
+    },
+    "tank": {
+     "file": "lm/F_tank.webp",
+     "range": 0.0299594234675169,
+     "size": 512,
+     "light": "tank"
     }
    },
    "coverage": 0.6097879409790039,
@@ -340,7 +381,8 @@
      "lava",
      "crt",
      "sun_open",
-     "sky_open"
+     "sky_open",
+     "tank"
     ]
    }
   },
@@ -360,33 +402,39 @@
     },
     "lamp": {
      "file": "lm/G_lamp.webp",
-     "range": 1.6319305896759033,
+     "range": 1.6318440437316895,
      "size": 512,
      "light": "lamp"
     },
     "lava": {
      "file": "lm/G_lava.webp",
-     "range": 0.012020251713693142,
+     "range": 0.011872983537614346,
      "size": 512,
      "light": "lava"
     },
     "crt": {
      "file": "lm/G_crt.webp",
-     "range": 0.2395956665277481,
+     "range": 0.23944836854934692,
      "size": 512,
      "light": "crt"
     },
     "sun_open": {
      "file": "lm/G_sun_open.webp",
-     "range": 2.829770565032959,
+     "range": 2.829763889312744,
      "size": 1024,
      "light": "sun"
     },
     "sky_open": {
      "file": "lm/G_sky_open.webp",
-     "range": 0.486258864402771,
+     "range": 0.48622602224349976,
      "size": 512,
      "light": "sky"
+    },
+    "tank": {
+     "file": "lm/G_tank.webp",
+     "range": 0.006152482703328133,
+     "size": 512,
+     "light": "tank"
     }
    },
    "coverage": 0.2541790008544922,
@@ -402,7 +450,77 @@
      "lava",
      "crt",
      "sun_open",
-     "sky_open"
+     "sky_open",
+     "tank"
+    ]
+   }
+  },
+  "H": {
+   "layers": {
+    "sun": {
+     "file": "lm/H_sun.webp",
+     "range": 0.014056088402867317,
+     "size": 2048,
+     "light": "sun"
+    },
+    "sky": {
+     "file": "lm/H_sky.webp",
+     "range": 0.03301448002457619,
+     "size": 1024,
+     "light": "sky"
+    },
+    "lamp": {
+     "file": "lm/H_lamp.webp",
+     "range": 0.09652674198150635,
+     "size": 1024,
+     "light": "lamp"
+    },
+    "lava": {
+     "file": "lm/H_lava.webp",
+     "range": 0.04966789111495018,
+     "size": 1024,
+     "light": "lava"
+    },
+    "crt": {
+     "file": "lm/H_crt.webp",
+     "range": 0.03686113655567169,
+     "size": 1024,
+     "light": "crt"
+    },
+    "sun_open": {
+     "file": "lm/H_sun_open.webp",
+     "range": 0.011277140118181705,
+     "size": 2048,
+     "light": "sun"
+    },
+    "sky_open": {
+     "file": "lm/H_sky_open.webp",
+     "range": 0.07321799546480179,
+     "size": 1024,
+     "light": "sky"
+    },
+    "tank": {
+     "file": "lm/H_tank.webp",
+     "range": 3.4308700561523438,
+     "size": 1024,
+     "light": "tank"
+    }
+   },
+   "coverage": 0.568922758102417,
+   "chroma": {
+    "file": "lm/H_chroma.webp",
+    "tile": 512,
+    "cols": 4,
+    "rows": 2,
+    "order": [
+     "sun",
+     "sky",
+     "lamp",
+     "lava",
+     "crt",
+     "sun_open",
+     "sky_open",
+     "tank"
     ]
    }
   }
@@ -414,7 +532,7 @@
     "env/sun_1.webp",
     "env/sun_2.webp"
    ],
-   "range": 1.4324761629104614
+   "range": 1.4342900514602661
   },
   "sky": {
    "files": [
@@ -422,7 +540,7 @@
     "env/sky_1.webp",
     "env/sky_2.webp"
    ],
-   "range": 3.9026222229003906
+   "range": 3.90234375
   },
   "lamp": {
    "files": [
@@ -446,7 +564,7 @@
     "env/crt_1.webp",
     "env/crt_2.webp"
    ],
-   "range": 1.703125
+   "range": 1.7032642364501953
   },
   "sun_open": {
    "files": [
@@ -463,6 +581,14 @@
     "env/sky_open_2.webp"
    ],
    "range": 4.512275695800781
+  },
+  "tank": {
+   "files": [
+    "env/tank_0.webp",
+    "env/tank_1.webp",
+    "env/tank_2.webp"
+   ],
+   "range": 0.6392297744750977
   }
  },
  "layers": [
@@ -472,7 +598,8 @@
   "lava",
   "crt",
   "sun_open",
-  "sky_open"
+  "sky_open",
+  "tank"
  ],
  "lights": {
   "sun": "sun",
@@ -481,7 +608,8 @@
   "lava": "lava",
   "crt": "crt",
   "sun_open": "sun",
-  "sky_open": "sky"
+  "sky_open": "sky",
+  "tank": "tank"
  },
  "env_levels": [
   1024,
